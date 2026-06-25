@@ -2,7 +2,8 @@
 
 Generate streaming-style hero backdrop images from TMDB — download as a 1920×1080 PNG ready for Plex, Jellyfin, home dashboards, or wherever you need a cinematic background.
 
-![Backdrop Generator preview](https://github.com/user-attachments/assets/placeholder)
+<img width="1200" alt="CleanShot 2026-06-25 at 15 38 19" src="https://github.com/user-attachments/assets/db200508-bd54-4fed-95ef-f39487b7e395" />
+
 
 ## Features
 
@@ -53,7 +54,3 @@ npm run dev
 - [Trakt API](https://trakt.docs.apiary.io/)
 - HTML Canvas for rendering and export
 - GitHub Pages for hosting
-
-## License
-
-MIT
