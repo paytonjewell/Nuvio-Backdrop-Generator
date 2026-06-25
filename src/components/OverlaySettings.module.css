@@ -1,0 +1,28 @@
+.presetGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+
+.presetBtn {
+  padding: 6px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 5px;
+  color: rgba(255,255,255,0.55);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+.presetBtn:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+.presetBtn.active {
+  border-color: rgba(108,99,255,0.5);
+  color: #a78bfa;
+  background: rgba(108,99,255,0.1);
+}

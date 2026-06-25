@@ -1,0 +1,56 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+.toolbar {
+  padding: 10px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+}
+
+.toolbarLabel {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+}
+
+.canvasWrap {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(108,99,255,0.04) 0%, transparent 60%);
+}
+
+.canvas {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08), 0 20px 60px rgba(0,0,0,0.7);
+  display: block;
+}
+
+.placeholder {
+  text-align: center;
+  color: rgba(255,255,255,0.18);
+}
+
+.placeholder svg {
+  margin-bottom: 14px;
+  opacity: 0.25;
+}
+
+.placeholder p {
+  font-size: 13px;
+}
+
+.placeholder small {
+  font-size: 11px;
+  margin-top: 4px;
+  display: block;
+  opacity: 0.7;
+}
