@@ -4,10 +4,10 @@ Generate streaming-style hero backdrop images from TMDB — download as a 1920×
 
 <img width="1200" alt="CleanShot 2026-06-25 at 15 38 19" src="https://github.com/user-attachments/assets/db200508-bd54-4fed-95ef-f39487b7e395" />
 
-
 ## Features
 
 - **TMDB Filter** — pull from Popular, Top Rated, Trending This Week, Now Playing, or On The Air, optionally filtered by genre
+- **Streaming service filter** — narrow results to a specific platform: Netflix, Amazon Prime, Disney+, HBO Max, Apple TV+, Hulu, Paramount+, Peacock, Hallmark, Shudder, Discovery+, Curiosity Stream, or Angel Studios
 - **Trakt Lists** — paste any public Trakt list URL; movies and shows are detected automatically
 - **Layout controls** — angle, card scale, gap, corner radius, vertical stagger, and X/Y position offset
 - **Overlay presets** — Cinematic, Dark Left, Dark Right, Vignette, Bottom Fade, or None
