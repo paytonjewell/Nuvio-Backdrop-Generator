@@ -25,14 +25,14 @@ You'll need a **TMDB API key** (Read Access Token) to use the app. A Trakt Clien
 
 Keys are saved to `localStorage` and never leave your browser.
 
-### Hosted version
+<!-- ### Hosted version
 
-[**Open Nuvio Backdrop Generator →**](https://paytonpierce.dev/Nuvio-Backdrop-Generator/)
+[**Open Nuvio Backdrop Generator →**](https://paytonpierce.dev/Nuvio-Backdrop-Generator/) -->
 
 ### Run locally
 
 ```bash
-git clone https://github.com/paytonpierce/Nuvio-Backdrop-Generator.git
+git clone https://github.com/paytonjewell/Nuvio-Backdrop-Generator.git
 cd Nuvio-Backdrop-Generator
 npm install
 npm run dev

@@ -54,3 +54,14 @@
   display: block;
   opacity: 0.7;
 }
+
+@media (max-width: 768px) {
+  .wrap {
+    height: auto;
+  }
+
+  .canvasWrap {
+    aspect-ratio: 16 / 9;
+    flex: none;
+  }
+}
