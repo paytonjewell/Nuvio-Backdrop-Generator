@@ -31,7 +31,8 @@ export async function fetchFilterImages({ type, sort, genre, provider, apiKey })
   } else if (genre || provider) {
     endpoint = `/discover/${type}`
     params = { sort_by: 'popularity.desc', include_adult: 'false' }
-    if (genre) params.with_genres = genre
+    if (genre === 'anime') params.with_keywords = '210024'
+    else if (genre) params.with_genres = genre
     if (provider) {
       params.with_watch_providers = provider
       params.watch_region = 'US'
