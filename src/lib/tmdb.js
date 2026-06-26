@@ -23,7 +23,8 @@ export async function validateTraktKey(key) {
   return res.ok
 }
 
-export async function fetchFilterImages({ type, sort, genre, provider, imageType = 'backdrop', apiKey }) {
+// Always returns both { backdrop: [...], poster: [...] }
+export async function fetchFilterImages({ type, sort, genre, provider, apiKey }) {
   let endpoint, params = {}
 
   if (sort === 'trending_week' && !genre && !provider) {
@@ -43,21 +44,23 @@ export async function fetchFilterImages({ type, sort, genre, provider, imageType
     params = { include_adult: 'false' }
   }
 
-  const paths = new Set()
+  const backdrops = new Set()
+  const posters = new Set()
   let page = 1
-  while (paths.size < 200) {
+  while (backdrops.size < 200) {
     const data = await fetchTMDB(endpoint, { ...params, page }, apiKey)
     for (const item of data.results) {
-      const path = imageType === 'poster' ? item.poster_path : item.backdrop_path
-      if (path) paths.add(path)
+      if (item.backdrop_path) backdrops.add(item.backdrop_path)
+      if (item.poster_path) posters.add(item.poster_path)
     }
     if (page >= Math.min(data.total_pages, 20)) break
     page++
   }
-  return [...paths]
+  return { backdrop: [...backdrops], poster: [...posters] }
 }
 
-export async function fetchTraktImages({ url, imageType = 'backdrop', traktKey, apiKey }) {
+// Always returns both { backdrop: [...], poster: [...] }
+export async function fetchTraktImages({ url, traktKey, apiKey }) {
   const m = url.match(/trakt\.tv\/users\/([^/]+)\/lists\/([^/?]+)/)
   if (!m) throw new Error('Invalid Trakt URL format')
   const [, user, list] = m
@@ -81,15 +84,18 @@ export async function fetchTraktImages({ url, imageType = 'backdrop', traktKey, 
 
   const results = await Promise.allSettled(
     lookups.map(({ tmdbId, tmdbType }) =>
-      fetchTMDB(`/${tmdbType}/${tmdbId}`, {}, apiKey).then(data =>
-        (imageType === 'poster' ? data.poster_path : data.backdrop_path) || null
-      )
+      fetchTMDB(`/${tmdbType}/${tmdbId}`, {}, apiKey).then(data => ({
+        backdrop: data.backdrop_path || null,
+        poster: data.poster_path || null,
+      }))
     )
   )
 
-  return results
-    .filter(r => r.status === 'fulfilled' && r.value)
-    .map(r => r.value)
+  const fulfilled = results.filter(r => r.status === 'fulfilled').map(r => r.value)
+  return {
+    backdrop: fulfilled.map(r => r.backdrop).filter(Boolean),
+    poster: fulfilled.map(r => r.poster).filter(Boolean),
+  }
 }
 
 export function loadImages(paths) {

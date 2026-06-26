@@ -14,6 +14,16 @@ import {
 } from "./lib/tmdb";
 import s from "./App.module.css";
 
+const CACHE_KEY = 'nuvio_image_cache'
+
+function getSourceKey(source) {
+  if (source.tab === 'filter') {
+    const { type, sort, genre, provider } = source.filter
+    return `filter|${type}|${sort}|${genre}|${provider}`
+  }
+  return `trakt|${source.trakt.url}`
+}
+
 const DEFAULT_SOURCE = {
   tab: "filter",
   imageType: "backdrop",
@@ -95,7 +105,7 @@ export default function App() {
     if (images.length > 0) setRenderTick((t) => t + 1);
   }, [layout, overlay, text]);
 
-  // Apply mode defaults and clear stale images when switching between backdrops/posters
+  // Apply mode defaults and restore cached images when switching between backdrops/posters
   const prevImageType = useRef(source.imageType);
   useEffect(() => {
     if (prevImageType.current === source.imageType) return;
@@ -105,10 +115,28 @@ export default function App() {
     } else {
       setLayout((l) => ({ ...l, stagger: DEFAULT_LAYOUT.stagger, scale: DEFAULT_LAYOUT.scale, imageOpacity: DEFAULT_LAYOUT.imageOpacity }));
     }
-    setImages([]);
-    setRawImages([]);
-    setCanDownload(false);
-    setStatus({ state: "", message: "Source type changed — click Generate to load new images." });
+    const restore = async () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}')
+        const cachedPaths = stored.sourceKey === getSourceKey(source) ? stored[source.imageType] : null
+        if (cachedPaths?.length > 0) {
+          setStatus({ state: 'loading', message: 'Restoring images…' })
+          const loaded = await loadImages(cachedPaths)
+          if (loaded.length > 0) {
+            setRawImages(loaded)
+            setImages(loaded)
+            setCanDownload(true)
+            setStatus({ state: 'success', message: `Done — ${loaded.length} unique backdrops, zero repeats.` })
+            return
+          }
+        }
+      } catch {}
+      setImages([])
+      setRawImages([])
+      setCanDownload(false)
+      setStatus({ state: '', message: 'Click Generate to create a backdrop.' })
+    }
+    restore()
   }, [source.imageType]);
 
   const resetLayout = () =>
@@ -134,39 +162,47 @@ export default function App() {
     setStatus({ state: "loading", message: "Fetching image list…" });
 
     try {
-      let paths = [];
+      let allPaths;
       if (source.tab === "filter") {
-        paths = await fetchFilterImages({
+        allPaths = await fetchFilterImages({
           type: source.filter.type,
           sort: source.filter.sort,
           genre: source.filter.genre,
           provider: source.filter.provider,
-          imageType: source.imageType,
           apiKey: tmdbKey,
         });
       } else {
-        paths = await fetchTraktImages({
+        allPaths = await fetchTraktImages({
           url: source.trakt.url,
-          imageType: source.imageType,
           traktKey,
           apiKey: tmdbKey,
         });
       }
 
-      if (paths.length === 0) {
+      // Shuffle each set once and cache both
+      const shuffledPaths = {
+        backdrop: shuffle(allPaths.backdrop),
+        poster: shuffle(allPaths.poster),
+      };
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          sourceKey: getSourceKey(source),
+          ...shuffledPaths,
+        }));
+      } catch {}
+
+      const activePaths = shuffledPaths[source.imageType];
+      if (activePaths.length === 0) {
         setStatus({
           state: "error",
-          message: "No images found — try a different filter or IDs.",
+          message: "No images found — try a different filter.",
         });
         setGenerating(false);
         return;
       }
 
-      setStatus({
-        state: "loading",
-        message: `Loading ${paths.length} images…`,
-      });
-      const loaded = await loadImages(paths);
+      setStatus({ state: "loading", message: `Loading ${activePaths.length} images…` });
+      const loaded = await loadImages(activePaths);
 
       if (loaded.length === 0) {
         setStatus({
@@ -177,9 +213,8 @@ export default function App() {
         return;
       }
 
-      const shuffled = shuffle(loaded);
       setRawImages(loaded);
-      setImages(shuffled);
+      setImages(loaded);
       setCanDownload(true);
       setStatus({
         state: "success",
