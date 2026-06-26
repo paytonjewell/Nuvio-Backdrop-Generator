@@ -51,6 +51,16 @@ export const WATCH_PROVIDERS = [
   { id: '1956',    name: 'Angel Studios' },
 ]
 
+export const DECADES = [
+  { value: 1960, label: "60s" },
+  { value: 1970, label: "70s" },
+  { value: 1980, label: "80s" },
+  { value: 1990, label: "90s" },
+  { value: 2000, label: "00s" },
+  { value: 2010, label: "10s" },
+  { value: 2020, label: "20s" },
+]
+
 export const MOVIE_SORT_OPTIONS = [
   { value: 'popular', label: 'Popular' },
   { value: 'top_rated', label: 'Top Rated' },

@@ -1,6 +1,6 @@
 import React from "react";
 import { SectionLabel, Card, Field, FieldLabel, ToggleRow, TabGroup, Notice, ResetButton } from "./UI";
-import { MOVIE_GENRES, TV_GENRES, MOVIE_SORT_OPTIONS, TV_SORT_OPTIONS, WATCH_PROVIDERS } from "../lib/constants";
+import { MOVIE_GENRES, TV_GENRES, MOVIE_SORT_OPTIONS, TV_SORT_OPTIONS, WATCH_PROVIDERS, DECADES } from "../lib/constants";
 
 export default function ImageSource({ source, onChange, onReset }) {
   const { tab, filter, trakt, imageType } = source;
@@ -10,6 +10,9 @@ export default function ImageSource({ source, onChange, onReset }) {
   const sortOptions = filter.provider
     ? allSortOptions.filter((o) => o.value !== "trending_week")
     : allSortOptions;
+
+  const TIME_SENSITIVE_SORTS = ["trending_week", "now_playing", "upcoming", "on_the_air", "airing_today"];
+  const isTimeSensitive = TIME_SENSITIVE_SORTS.includes(filter.sort);
 
   const setFilter = (patch) => onChange({ ...source, filter: { ...filter, ...patch } });
   const setTrakt = (patch) => onChange({ ...source, trakt: { ...trakt, ...patch } });
@@ -55,7 +58,12 @@ export default function ImageSource({ source, onChange, onReset }) {
                 value={filter.sort}
                 onChange={(e) => {
                   const sort = e.target.value
-                  setFilter({ sort, ...(sort === "trending_week" && { provider: "" }) })
+                  const timeSensitive = TIME_SENSITIVE_SORTS.includes(sort)
+                  setFilter({
+                    sort,
+                    ...(sort === "trending_week" && { provider: "" }),
+                    ...(timeSensitive && filter.decade && { decade: null }),
+                  })
                 }}
               >
                 {sortOptions.map((o) => (
@@ -89,6 +97,20 @@ export default function ImageSource({ source, onChange, onReset }) {
                 ))}
               </select>
             </Field>
+            {!isTimeSensitive && (
+              <Field>
+                <FieldLabel>Decade (optional)</FieldLabel>
+                <select
+                  value={filter.decade ?? ""}
+                  onChange={(e) => setFilter({ decade: e.target.value ? Number(e.target.value) : null })}
+                >
+                  <option value="">Any Era</option>
+                  {DECADES.map((d) => (
+                    <option key={d.value} value={d.value}>{d.label}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
           </>
         )}
 

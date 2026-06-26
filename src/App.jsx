@@ -28,7 +28,7 @@ function getSourceKey(source) {
 const DEFAULT_SOURCE = {
   tab: "filter",
   imageType: "backdrop",
-  filter: { type: "movie", sort: "popular", genre: "", provider: "" },
+  filter: { type: "movie", sort: "popular", genre: "", provider: "", decade: null },
   trakt: { url: "" },
 };
 
@@ -188,6 +188,7 @@ export default function App() {
           sort: source.filter.sort,
           genre: source.filter.genre,
           provider: source.filter.provider,
+          decade: source.filter.decade,
           apiKey: tmdbKey,
         });
       } else {

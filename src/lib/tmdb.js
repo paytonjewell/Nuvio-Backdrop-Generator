@@ -23,21 +23,44 @@ export async function validateTraktKey(key) {
   return res.ok
 }
 
+const DISCOVER_SORT_MAP = {
+  popular:        'popularity.desc',
+  top_rated:      'vote_average.desc',
+  now_playing:    'popularity.desc',
+  upcoming:       'primary_release_date.desc',
+  on_the_air:     'popularity.desc',
+  airing_today:   'popularity.desc',
+  trending_week:  'popularity.desc',
+}
+
 // Always returns both { backdrop: [...], poster: [...] }
-export async function fetchFilterImages({ type, sort, genre, provider, apiKey }) {
+export async function fetchFilterImages({ type, sort, genre, provider, decade, apiKey }) {
   let endpoint, params = {}
 
-  if (sort === 'trending_week' && !genre && !provider) {
+  const useDiscover = !!(genre || provider || decade)
+
+  if (sort === 'trending_week' && !useDiscover) {
     endpoint = `/trending/${type}/week`
-  } else if (genre || provider) {
+  } else if (useDiscover) {
     endpoint = `/discover/${type}`
-    params = { sort_by: 'popularity.desc', include_adult: 'false' }
+    params = { sort_by: DISCOVER_SORT_MAP[sort] || 'popularity.desc', include_adult: 'false' }
     if (genre === 'anime') params.with_keywords = '210024'
     else if (genre) params.with_genres = genre
     if (provider) {
       params.with_watch_providers = provider
       params.watch_region = 'US'
       params.with_watch_monetization_types = 'flatrate'
+    }
+    if (decade) {
+      const start = `${decade}-01-01`
+      const end   = `${decade + 9}-12-31`
+      if (type === 'movie') {
+        params['primary_release_date.gte'] = start
+        params['primary_release_date.lte'] = end
+      } else {
+        params['first_air_date.gte'] = start
+        params['first_air_date.lte'] = end
+      }
     }
   } else {
     endpoint = `/${type}/${sort}`
