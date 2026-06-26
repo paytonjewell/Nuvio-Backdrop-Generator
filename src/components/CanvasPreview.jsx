@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react'
 import { renderCanvas } from '../lib/canvas'
 import s from './CanvasPreview.module.css'
 
-export default function CanvasPreview({ images, imageType, layout, overlay, text, triggerRender }) {
+export default function CanvasPreview({ images, imageType, layout, overlay, text, resolution = { width: 1920, height: 1080 }, triggerRender }) {
   const canvasRef = useRef(null)
   const hasImages = images.length > 0
 
@@ -24,15 +24,17 @@ export default function CanvasPreview({ images, imageType, layout, overlay, text
         overlayOpacity: overlay.opacity,
         overlayReach: overlay.reach,
         imageType,
+        width: resolution.width,
+        height: resolution.height,
       }, text)
     }
     render()
-  }, [images, layout, overlay, text, triggerRender])
+  }, [images, layout, overlay, text, resolution, triggerRender])
 
   return (
     <div className={s.wrap}>
       <div className={s.toolbar}>
-        <span className={s.toolbarLabel}>Preview · 1920 × 1080</span>
+        <span className={s.toolbarLabel}>Preview · {resolution.width} × {resolution.height}</span>
       </div>
       <div className={s.canvasWrap}>
         {!hasImages && (

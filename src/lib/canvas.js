@@ -15,8 +15,7 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
-function applyOverlay(ctx, preset, opacity, reach = 0.6) {
-  const W = CANVAS_W, H = CANVAS_H
+function applyOverlay(ctx, preset, opacity, reach = 0.6, W = CANVAS_W, H = CANVAS_H) {
   if (preset === 'none') return
 
   let grad
@@ -80,28 +79,28 @@ const TEXT_ANCHORS = {
   'bottom-right':  { xFrac: 1,   yFrac: 1,   align: 'right',  baseline: 'bottom' },
 }
 
-function drawText(ctx, text) {
+function drawText(ctx, text, W = CANVAS_W, H = CANVAS_H) {
   const { content, font, size, preset, offsetX, offsetY, color, shadow, shadowBlur, gradient, gradientTo } = text
   if (!content.trim()) return
 
-  const W = CANVAS_W, H = CANVAS_H
-  const PAD = 80
+  const dpr = W / 1920
+  const PAD = Math.round(80 * dpr)
   const weight = FONT_WEIGHTS[font] || 700
   ctx.save()
-  ctx.font = `${weight} ${size}px "${font}"`
+  ctx.font = `${weight} ${Math.round(size * dpr)}px "${font}"`
 
   const anchor = TEXT_ANCHORS[preset] || TEXT_ANCHORS['bottom-left']
-  const x = PAD + anchor.xFrac * (W - PAD * 2) + offsetX
-  const y = PAD + anchor.yFrac * (H - PAD * 2) + offsetY
+  const x = PAD + anchor.xFrac * (W - PAD * 2) + offsetX * dpr
+  const y = PAD + anchor.yFrac * (H - PAD * 2) + offsetY * (H / 1080)
 
   ctx.textAlign = anchor.align
   ctx.textBaseline = anchor.baseline
 
   if (shadow) {
     ctx.shadowColor = 'rgba(0,0,0,0.9)'
-    ctx.shadowBlur = shadowBlur
+    ctx.shadowBlur = shadowBlur * dpr
     ctx.shadowOffsetX = 0
-    ctx.shadowOffsetY = 4
+    ctx.shadowOffsetY = 4 * dpr
   }
 
   if (gradient) {
@@ -122,8 +121,8 @@ function drawText(ctx, text) {
 }
 
 export function renderCanvas(canvas, images, settings, text = {}) {
-  const { gap, scale, radius, stagger, angleDeg, bgColor, overlayPreset, overlayOpacity, overlayReach = 0.6, offsetX = 0, offsetY = 0, imageType = 'backdrop', imageOpacity = 1 } = settings
-  const W = CANVAS_W, H = CANVAS_H
+  const { gap, scale, radius, stagger, angleDeg, bgColor, overlayPreset, overlayOpacity, overlayReach = 0.6, offsetX = 0, offsetY = 0, imageType = 'backdrop', imageOpacity = 1, width = CANVAS_W, height = CANVAS_H } = settings
+  const W = width, H = height
 
   const cardW = Math.round(320 * scale * (W / 1920))
   const cardH = imageType === 'poster'
@@ -193,6 +192,6 @@ export function renderCanvas(canvas, images, settings, text = {}) {
   }
 
   ctx.restore()
-  applyOverlay(ctx, overlayPreset, overlayOpacity, overlayReach)
-  if (text.content) drawText(ctx, text)
+  applyOverlay(ctx, overlayPreset, overlayOpacity, overlayReach, W, H)
+  if (text.content) drawText(ctx, text, W, H)
 }

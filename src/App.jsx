@@ -12,6 +12,7 @@ import {
   loadImages,
   shuffle,
 } from "./lib/tmdb";
+import { RESOLUTIONS } from "./lib/constants";
 import s from "./App.module.css";
 
 const CACHE_KEY = 'nuvio_image_cache'
@@ -81,6 +82,7 @@ export default function App() {
   const [layout, setLayout] = useState(() => ({ ...DEFAULT_LAYOUT, ...loadStored('nuvio_layout', {}) }));
   const [overlay, setOverlay] = useState(() => ({ ...DEFAULT_OVERLAY, ...loadStored('nuvio_overlay', {}) }));
   const [text, setText] = useState(() => ({ ...DEFAULT_TEXT, ...loadStored('nuvio_text', {}) }));
+  const [resolution, setResolution] = useState(() => loadStored('nuvio_resolution', { width: 1920, height: 1080 }));
 
   const [images, setImages] = useState([]); // loaded Image objects, shuffled
   const [rawImages, setRawImages] = useState([]); // unshuffled, for re-shuffling
@@ -99,6 +101,9 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("trakt_key", traktKey);
   }, [traktKey]);
+
+  // Persist resolution immediately (infrequent change, no debounce needed)
+  useEffect(() => { localStorage.setItem('nuvio_resolution', JSON.stringify(resolution)); }, [resolution]);
 
   // Persist layout/text/overlay to localStorage (debounced)
   useEffect(() => {
@@ -290,6 +295,20 @@ export default function App() {
             >
               Shuffle Images
             </SecondaryButton>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>Resolution</span>
+              <select
+                value={`${resolution.width}x${resolution.height}`}
+                onChange={e => {
+                  const r = RESOLUTIONS.find(r => `${r.width}x${r.height}` === e.target.value)
+                  if (r) setResolution({ width: r.width, height: r.height })
+                }}
+              >
+                {RESOLUTIONS.map(r => (
+                  <option key={r.label} value={`${r.width}x${r.height}`}>{r.label}</option>
+                ))}
+              </select>
+            </div>
             <SecondaryButton onClick={downloadImage} disabled={!canDownload}>
               Download PNG
             </SecondaryButton>
@@ -303,6 +322,7 @@ export default function App() {
             layout={layout}
             overlay={overlay}
             text={text}
+            resolution={resolution}
             triggerRender={renderTick}
           />
         </main>

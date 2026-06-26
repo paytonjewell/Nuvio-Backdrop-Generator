@@ -19,6 +19,13 @@ export const TV_GENRES = [
 ]
 
 
+export const RESOLUTIONS = [
+  { label: '4K — 3840×2160', width: 3840, height: 2160 },
+  { label: '1440p — 2560×1440', width: 2560, height: 1440 },
+  { label: '1080p — 1920×1080', width: 1920, height: 1080 },
+  { label: '720p — 1280×720', width: 1280, height: 720 },
+]
+
 export const TEXT_FONTS = [
   { value: 'Inter',            weight: 700 },
   { value: 'Bebas Neue',       weight: 400 },
