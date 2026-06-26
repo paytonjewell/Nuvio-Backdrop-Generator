@@ -15,33 +15,34 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath()
 }
 
-function applyOverlay(ctx, preset, opacity) {
+function applyOverlay(ctx, preset, opacity, reach = 0.6) {
   const W = CANVAS_W, H = CANVAS_H
   if (preset === 'none') return
 
   let grad
   if (preset === 'dark-left') {
-    grad = ctx.createLinearGradient(0, 0, W, 0)
+    grad = ctx.createLinearGradient(0, 0, W * reach, 0)
     grad.addColorStop(0, `rgba(0,0,0,${opacity})`)
-    grad.addColorStop(0.5, `rgba(0,0,0,${(opacity * 0.7).toFixed(2)})`)
+    grad.addColorStop(0.5, `rgba(0,0,0,${(opacity * 0.5).toFixed(2)})`)
     grad.addColorStop(1, 'rgba(0,0,0,0)')
   } else if (preset === 'dark-right') {
-    grad = ctx.createLinearGradient(W, 0, 0, 0)
+    grad = ctx.createLinearGradient(W, 0, W * (1 - reach), 0)
     grad.addColorStop(0, `rgba(0,0,0,${opacity})`)
-    grad.addColorStop(0.5, `rgba(0,0,0,${(opacity * 0.7).toFixed(2)})`)
+    grad.addColorStop(0.5, `rgba(0,0,0,${(opacity * 0.5).toFixed(2)})`)
     grad.addColorStop(1, 'rgba(0,0,0,0)')
   } else if (preset === 'bottom') {
-    grad = ctx.createLinearGradient(0, H, 0, 0)
+    grad = ctx.createLinearGradient(0, H, 0, H * (1 - reach))
     grad.addColorStop(0, `rgba(0,0,0,${opacity})`)
-    grad.addColorStop(0.5, `rgba(0,0,0,${(opacity * 0.35).toFixed(2)})`)
+    grad.addColorStop(0.5, `rgba(0,0,0,${(opacity * 0.5).toFixed(2)})`)
     grad.addColorStop(1, 'rgba(0,0,0,0)')
   } else if (preset === 'vignette') {
-    grad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.65)
+    const outerR = Math.max(W, H) * (0.9 - reach * 0.5)
+    grad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, outerR)
     grad.addColorStop(0, 'rgba(0,0,0,0)')
-    grad.addColorStop(0.55, `rgba(0,0,0,${(opacity * 0.3).toFixed(2)})`)
+    grad.addColorStop(0.5, `rgba(0,0,0,${(opacity * 0.3).toFixed(2)})`)
     grad.addColorStop(1, `rgba(0,0,0,${opacity})`)
   } else if (preset === 'cinematic') {
-    const lg = ctx.createLinearGradient(0, 0, W * 0.55, 0)
+    const lg = ctx.createLinearGradient(0, 0, W * reach, 0)
     lg.addColorStop(0, `rgba(0,0,0,${opacity})`)
     lg.addColorStop(1, 'rgba(0,0,0,0)')
     ctx.fillStyle = lg
@@ -58,8 +59,70 @@ function applyOverlay(ctx, preset, opacity) {
   if (grad) { ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H) }
 }
 
-export function renderCanvas(canvas, images, settings) {
-  const { gap, scale, radius, stagger, angleDeg, bgColor, overlayPreset, overlayOpacity, offsetX = 0, offsetY = 0 } = settings
+const FONT_WEIGHTS = {
+  'Inter': 700,
+  'Bebas Neue': 400,
+  'Montserrat': 800,
+  'Oswald': 600,
+  'Playfair Display': 700,
+  'Roboto Condensed': 700,
+}
+
+const TEXT_ANCHORS = {
+  'top-left':      { xFrac: 0,   yFrac: 0,   align: 'left',   baseline: 'top' },
+  'top-center':    { xFrac: 0.5, yFrac: 0,   align: 'center', baseline: 'top' },
+  'top-right':     { xFrac: 1,   yFrac: 0,   align: 'right',  baseline: 'top' },
+  'center-left':   { xFrac: 0,   yFrac: 0.5, align: 'left',   baseline: 'middle' },
+  'center':        { xFrac: 0.5, yFrac: 0.5, align: 'center', baseline: 'middle' },
+  'center-right':  { xFrac: 1,   yFrac: 0.5, align: 'right',  baseline: 'middle' },
+  'bottom-left':   { xFrac: 0,   yFrac: 1,   align: 'left',   baseline: 'bottom' },
+  'bottom-center': { xFrac: 0.5, yFrac: 1,   align: 'center', baseline: 'bottom' },
+  'bottom-right':  { xFrac: 1,   yFrac: 1,   align: 'right',  baseline: 'bottom' },
+}
+
+function drawText(ctx, text) {
+  const { content, font, size, preset, offsetX, offsetY, color, shadow, shadowBlur, gradient, gradientTo } = text
+  if (!content.trim()) return
+
+  const W = CANVAS_W, H = CANVAS_H
+  const PAD = 80
+  const weight = FONT_WEIGHTS[font] || 700
+  ctx.save()
+  ctx.font = `${weight} ${size}px "${font}"`
+
+  const anchor = TEXT_ANCHORS[preset] || TEXT_ANCHORS['bottom-left']
+  const x = PAD + anchor.xFrac * (W - PAD * 2) + offsetX
+  const y = PAD + anchor.yFrac * (H - PAD * 2) + offsetY
+
+  ctx.textAlign = anchor.align
+  ctx.textBaseline = anchor.baseline
+
+  if (shadow) {
+    ctx.shadowColor = 'rgba(0,0,0,0.9)'
+    ctx.shadowBlur = shadowBlur
+    ctx.shadowOffsetX = 0
+    ctx.shadowOffsetY = 4
+  }
+
+  if (gradient) {
+    const textW = ctx.measureText(content).width
+    const startX = anchor.align === 'center' ? x - textW / 2
+                 : anchor.align === 'right'  ? x - textW
+                 : x
+    const grad = ctx.createLinearGradient(startX, y, startX + textW, y)
+    grad.addColorStop(0, color)
+    grad.addColorStop(1, gradientTo)
+    ctx.fillStyle = grad
+  } else {
+    ctx.fillStyle = color
+  }
+
+  ctx.fillText(content, x, y)
+  ctx.restore()
+}
+
+export function renderCanvas(canvas, images, settings, text = {}) {
+  const { gap, scale, radius, stagger, angleDeg, bgColor, overlayPreset, overlayOpacity, overlayReach = 0.6, offsetX = 0, offsetY = 0 } = settings
   const W = CANVAS_W, H = CANVAS_H
 
   const cardW = Math.round(320 * scale * (W / 1920))
@@ -127,5 +190,6 @@ export function renderCanvas(canvas, images, settings) {
   }
 
   ctx.restore()
-  applyOverlay(ctx, overlayPreset, overlayOpacity)
+  applyOverlay(ctx, overlayPreset, overlayOpacity, overlayReach)
+  if (text.content) drawText(ctx, text)
 }

@@ -3,6 +3,7 @@ import ApiKeys from "./components/ApiKeys";
 import ImageSource from "./components/ImageSource";
 import LayoutSettings from "./components/LayoutSettings";
 import OverlaySettings from "./components/OverlaySettings";
+import TextSettings from "./components/TextSettings";
 import CanvasPreview from "./components/CanvasPreview";
 import { StatusBar, PrimaryButton, SecondaryButton } from "./components/UI";
 import {
@@ -32,6 +33,20 @@ const DEFAULT_OVERLAY = {
   preset: "cinematic",
   opacity: 0.85,
   bgColor: "transparent",
+  reach: 0.6,
+};
+const DEFAULT_TEXT = {
+  content: '',
+  font: 'Inter',
+  size: 80,
+  preset: 'bottom-left',
+  offsetX: 0,
+  offsetY: 0,
+  color: '#ffffff',
+  shadow: true,
+  shadowBlur: 24,
+  gradient: false,
+  gradientTo: '#a855f7',
 };
 
 function loadStored(key, fallback) {
@@ -53,6 +68,7 @@ export default function App() {
   const [source, setSource] = useState(DEFAULT_SOURCE);
   const [layout, setLayout] = useState(DEFAULT_LAYOUT);
   const [overlay, setOverlay] = useState(DEFAULT_OVERLAY);
+  const [text, setText] = useState(DEFAULT_TEXT);
 
   const [images, setImages] = useState([]); // loaded Image objects, shuffled
   const [rawImages, setRawImages] = useState([]); // unshuffled, for re-shuffling
@@ -75,7 +91,7 @@ export default function App() {
   // Re-render canvas whenever layout/overlay changes (images stay the same)
   useEffect(() => {
     if (images.length > 0) setRenderTick((t) => t + 1);
-  }, [layout, overlay]);
+  }, [layout, overlay, text]);
 
   const generate = useCallback(async () => {
     if (!tmdbKey) {
@@ -181,6 +197,7 @@ export default function App() {
           />
           <ImageSource source={source} onChange={setSource} />
           <LayoutSettings layout={layout} onChange={setLayout} />
+          <TextSettings text={text} onChange={setText} />
           <OverlaySettings overlay={overlay} onChange={setOverlay} />
 
           <div className={s.actions}>
@@ -205,6 +222,7 @@ export default function App() {
             images={images}
             layout={layout}
             overlay={overlay}
+            text={text}
             triggerRender={renderTick}
           />
         </main>

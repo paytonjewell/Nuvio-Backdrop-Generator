@@ -2,25 +2,30 @@ import React, { useRef, useEffect } from 'react'
 import { renderCanvas } from '../lib/canvas'
 import s from './CanvasPreview.module.css'
 
-export default function CanvasPreview({ images, layout, overlay, triggerRender }) {
+export default function CanvasPreview({ images, layout, overlay, text, triggerRender }) {
   const canvasRef = useRef(null)
   const hasImages = images.length > 0
 
   useEffect(() => {
     if (!hasImages || !canvasRef.current) return
-    renderCanvas(canvasRef.current, images, {
-      gap: layout.gap,
-      scale: layout.scale / 100,
-      radius: layout.radius,
-      stagger: layout.stagger,
-      angleDeg: layout.angle,
-      offsetX: layout.offsetX,
-      offsetY: layout.offsetY,
-      bgColor: overlay.bgColor,
-      overlayPreset: overlay.preset,
-      overlayOpacity: overlay.opacity,
-    })
-  }, [images, layout, overlay, triggerRender])
+    const render = async () => {
+      await document.fonts.ready
+      renderCanvas(canvasRef.current, images, {
+        gap: layout.gap,
+        scale: layout.scale / 100,
+        radius: layout.radius,
+        stagger: layout.stagger,
+        angleDeg: layout.angle,
+        offsetX: layout.offsetX,
+        offsetY: layout.offsetY,
+        bgColor: overlay.bgColor,
+        overlayPreset: overlay.preset,
+        overlayOpacity: overlay.opacity,
+        overlayReach: overlay.reach,
+      }, text)
+    }
+    render()
+  }, [images, layout, overlay, text, triggerRender])
 
   return (
     <div className={s.wrap}>

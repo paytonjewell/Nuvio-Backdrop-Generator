@@ -19,6 +19,15 @@ export const TV_GENRES = [
 ]
 
 
+export const TEXT_FONTS = [
+  { value: 'Inter',            weight: 700 },
+  { value: 'Bebas Neue',       weight: 400 },
+  { value: 'Montserrat',       weight: 800 },
+  { value: 'Oswald',           weight: 600 },
+  { value: 'Playfair Display', weight: 700 },
+  { value: 'Roboto Condensed', weight: 700 },
+]
+
 export const WATCH_PROVIDERS = [
   { id: '8',       name: 'Netflix' },
   { id: '10',      name: 'Amazon Prime' },

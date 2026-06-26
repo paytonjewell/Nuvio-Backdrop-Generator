@@ -37,6 +37,14 @@ export default function OverlaySettings({ overlay, onChange }) {
             displayValue={`${Math.round(overlay.opacity * 100)}%`}
             onChange={(v) => set({ opacity: v / 100 })} />
         </Field>
+        {overlay.preset !== 'none' && (
+          <Field>
+            <FieldLabel>Gradient Coverage</FieldLabel>
+            <RangeRow min={10} max={100} value={Math.round(overlay.reach * 100)}
+              displayValue={`${Math.round(overlay.reach * 100)}%`}
+              onChange={(v) => set({ reach: v / 100 })} />
+          </Field>
+        )}
         <Field>
           <FieldLabel>Background</FieldLabel>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
