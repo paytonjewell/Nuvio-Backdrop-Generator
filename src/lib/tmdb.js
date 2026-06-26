@@ -23,14 +23,20 @@ export async function validateTraktKey(key) {
   return res.ok
 }
 
-export async function fetchFilterImages({ type, sort, genre, apiKey }) {
+export async function fetchFilterImages({ type, sort, genre, provider, apiKey }) {
   let endpoint, params = {}
 
-  if (sort === 'trending_week' && !genre) {
+  if (sort === 'trending_week' && !genre && !provider) {
     endpoint = `/trending/${type}/week`
-  } else if (genre) {
+  } else if (genre || provider) {
     endpoint = `/discover/${type}`
-    params = { with_genres: genre, sort_by: 'popularity.desc', include_adult: 'false' }
+    params = { sort_by: 'popularity.desc', include_adult: 'false' }
+    if (genre) params.with_genres = genre
+    if (provider) {
+      params.with_watch_providers = provider
+      params.watch_region = 'US'
+      params.with_watch_monetization_types = 'flatrate'
+    }
   } else {
     endpoint = `/${type}/${sort}`
     params = { include_adult: 'false' }

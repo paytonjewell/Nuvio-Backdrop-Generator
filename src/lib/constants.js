@@ -18,6 +18,22 @@ export const TV_GENRES = [
 ]
 
 
+export const WATCH_PROVIDERS = [
+  { id: '8',       name: 'Netflix' },
+  { id: '10',      name: 'Amazon Prime' },
+  { id: '337',     name: 'Disney+' },
+  { id: '1899',    name: 'HBO Max' },
+  { id: '2',       name: 'Apple TV+' },
+  { id: '15',      name: 'Hulu' },
+  { id: '2303',    name: 'Paramount+' },
+  { id: '386|387', name: 'Peacock' },
+  { id: '290',     name: 'Hallmark' },
+  { id: '99',      name: 'Shudder' },
+  { id: '520',     name: 'Discovery+' },
+  { id: '190',     name: 'Curiosity Stream' },
+  { id: '1956',    name: 'Angel Studios' },
+]
+
 export const MOVIE_SORT_OPTIONS = [
   { value: 'popular', label: 'Popular' },
   { value: 'top_rated', label: 'Top Rated' },

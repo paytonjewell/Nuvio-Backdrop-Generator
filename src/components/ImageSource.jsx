@@ -1,12 +1,15 @@
 import React from "react";
 import { SectionLabel, Card, Field, FieldLabel, TabGroup, Notice } from "./UI";
-import { MOVIE_GENRES, TV_GENRES, MOVIE_SORT_OPTIONS, TV_SORT_OPTIONS } from "../lib/constants";
+import { MOVIE_GENRES, TV_GENRES, MOVIE_SORT_OPTIONS, TV_SORT_OPTIONS, WATCH_PROVIDERS } from "../lib/constants";
 
 export default function ImageSource({ source, onChange }) {
   const { tab, filter, trakt } = source;
 
   const genres = filter.type === "movie" ? MOVIE_GENRES : TV_GENRES;
-  const sortOptions = filter.type === "movie" ? MOVIE_SORT_OPTIONS : TV_SORT_OPTIONS;
+  const allSortOptions = filter.type === "movie" ? MOVIE_SORT_OPTIONS : TV_SORT_OPTIONS;
+  const sortOptions = filter.provider
+    ? allSortOptions.filter((o) => o.value !== "trending_week")
+    : allSortOptions;
 
   const setFilter = (patch) => onChange({ ...source, filter: { ...filter, ...patch } });
   const setTrakt = (patch) => onChange({ ...source, trakt: { ...trakt, ...patch } });
@@ -40,13 +43,30 @@ export default function ImageSource({ source, onChange }) {
               <FieldLabel>Source</FieldLabel>
               <select
                 value={filter.sort}
-                onChange={(e) => setFilter({ sort: e.target.value })}
+                onChange={(e) => {
+                  const sort = e.target.value
+                  setFilter({ sort, ...(sort === "trending_week" && { provider: "" }) })
+                }}
               >
                 {sortOptions.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
               </select>
             </Field>
+            {filter.sort !== "trending_week" && (
+              <Field>
+                <FieldLabel>Streaming Service (optional)</FieldLabel>
+                <select
+                  value={filter.provider}
+                  onChange={(e) => setFilter({ provider: e.target.value })}
+                >
+                  <option value="">Any</option>
+                  {WATCH_PROVIDERS.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              </Field>
+            )}
             <Field>
               <FieldLabel>Genre (optional)</FieldLabel>
               <select

@@ -10,7 +10,7 @@ import s from './App.module.css'
 
 const DEFAULT_SOURCE = {
   tab: 'filter',
-  filter: { type: 'movie', sort: 'popular', genre: '' },
+  filter: { type: 'movie', sort: 'popular', genre: '', provider: '' },
   trakt: { url: '' },
 }
 
@@ -57,6 +57,7 @@ export default function App() {
           type: source.filter.type,
           sort: source.filter.sort,
           genre: source.filter.genre,
+          provider: source.filter.provider,
           apiKey: tmdbKey,
         })
       } else {
