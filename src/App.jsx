@@ -78,9 +78,9 @@ export default function App() {
     () => localStorage.getItem("trakt_key") || "",
   );
   const [source, setSource] = useState(DEFAULT_SOURCE);
-  const [layout, setLayout] = useState(DEFAULT_LAYOUT);
-  const [overlay, setOverlay] = useState(DEFAULT_OVERLAY);
-  const [text, setText] = useState(DEFAULT_TEXT);
+  const [layout, setLayout] = useState(() => ({ ...DEFAULT_LAYOUT, ...loadStored('nuvio_layout', {}) }));
+  const [overlay, setOverlay] = useState(() => ({ ...DEFAULT_OVERLAY, ...loadStored('nuvio_overlay', {}) }));
+  const [text, setText] = useState(() => ({ ...DEFAULT_TEXT, ...loadStored('nuvio_text', {}) }));
 
   const [images, setImages] = useState([]); // loaded Image objects, shuffled
   const [rawImages, setRawImages] = useState([]); // unshuffled, for re-shuffling
@@ -99,6 +99,20 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("trakt_key", traktKey);
   }, [traktKey]);
+
+  // Persist layout/text/overlay to localStorage (debounced)
+  useEffect(() => {
+    const t = setTimeout(() => localStorage.setItem('nuvio_layout', JSON.stringify(layout)), 500);
+    return () => clearTimeout(t);
+  }, [layout]);
+  useEffect(() => {
+    const t = setTimeout(() => localStorage.setItem('nuvio_overlay', JSON.stringify(overlay)), 500);
+    return () => clearTimeout(t);
+  }, [overlay]);
+  useEffect(() => {
+    const t = setTimeout(() => localStorage.setItem('nuvio_text', JSON.stringify(text)), 500);
+    return () => clearTimeout(t);
+  }, [text]);
 
   // Re-render canvas whenever layout/overlay changes (images stay the same)
   useEffect(() => {
