@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react'
 import { renderCanvas } from '../lib/canvas'
 import s from './CanvasPreview.module.css'
 
-export default function CanvasPreview({ images, layout, overlay, text, triggerRender }) {
+export default function CanvasPreview({ images, imageType, layout, overlay, text, triggerRender }) {
   const canvasRef = useRef(null)
   const hasImages = images.length > 0
 
@@ -18,10 +18,12 @@ export default function CanvasPreview({ images, layout, overlay, text, triggerRe
         angleDeg: layout.angle,
         offsetX: layout.offsetX,
         offsetY: layout.offsetY,
+        imageOpacity: layout.imageOpacity / 100,
         bgColor: overlay.bgColor,
         overlayPreset: overlay.preset,
         overlayOpacity: overlay.opacity,
         overlayReach: overlay.reach,
+        imageType,
       }, text)
     }
     render()

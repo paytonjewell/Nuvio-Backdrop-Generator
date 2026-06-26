@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import ApiKeys from "./components/ApiKeys";
 import ImageSource from "./components/ImageSource";
 import LayoutSettings from "./components/LayoutSettings";
@@ -16,6 +16,7 @@ import s from "./App.module.css";
 
 const DEFAULT_SOURCE = {
   tab: "filter",
+  imageType: "backdrop",
   filter: { type: "movie", sort: "popular", genre: "", provider: "" },
   trakt: { url: "" },
 };
@@ -28,6 +29,7 @@ const DEFAULT_LAYOUT = {
   stagger: 120,
   offsetX: 0,
   offsetY: 0,
+  imageOpacity: 100,
 };
 const DEFAULT_OVERLAY = {
   preset: "cinematic",
@@ -38,7 +40,7 @@ const DEFAULT_OVERLAY = {
 const DEFAULT_TEXT = {
   content: '',
   font: 'Inter',
-  size: 80,
+  size: 100,
   preset: 'bottom-left',
   offsetX: 0,
   offsetY: 0,
@@ -93,6 +95,32 @@ export default function App() {
     if (images.length > 0) setRenderTick((t) => t + 1);
   }, [layout, overlay, text]);
 
+  // Apply mode defaults and clear stale images when switching between backdrops/posters
+  const prevImageType = useRef(source.imageType);
+  useEffect(() => {
+    if (prevImageType.current === source.imageType) return;
+    prevImageType.current = source.imageType;
+    if (source.imageType === "poster") {
+      setLayout((l) => ({ ...l, stagger: 200, scale: 100, imageOpacity: 50 }));
+    } else {
+      setLayout((l) => ({ ...l, stagger: DEFAULT_LAYOUT.stagger, scale: DEFAULT_LAYOUT.scale, imageOpacity: DEFAULT_LAYOUT.imageOpacity }));
+    }
+    setImages([]);
+    setRawImages([]);
+    setCanDownload(false);
+    setStatus({ state: "", message: "Source type changed — click Generate to load new images." });
+  }, [source.imageType]);
+
+  const resetLayout = () =>
+    setLayout(
+      source.imageType === "poster"
+        ? { ...DEFAULT_LAYOUT, stagger: 200, scale: 100, imageOpacity: 50 }
+        : DEFAULT_LAYOUT
+    );
+  const resetText = () => setText(DEFAULT_TEXT);
+  const resetOverlay = () => setOverlay(DEFAULT_OVERLAY);
+  const resetSource = () => setSource(DEFAULT_SOURCE);
+
   const generate = useCallback(async () => {
     if (!tmdbKey) {
       setStatus({
@@ -113,11 +141,13 @@ export default function App() {
           sort: source.filter.sort,
           genre: source.filter.genre,
           provider: source.filter.provider,
+          imageType: source.imageType,
           apiKey: tmdbKey,
         });
       } else {
         paths = await fetchTraktImages({
           url: source.trakt.url,
+          imageType: source.imageType,
           traktKey,
           apiKey: tmdbKey,
         });
@@ -195,10 +225,10 @@ export default function App() {
             onTmdbChange={setTmdbKey}
             onTraktChange={setTraktKey}
           />
-          <ImageSource source={source} onChange={setSource} />
-          <LayoutSettings layout={layout} onChange={setLayout} />
-          <TextSettings text={text} onChange={setText} />
-          <OverlaySettings overlay={overlay} onChange={setOverlay} />
+          <ImageSource source={source} onChange={setSource} onReset={resetSource} />
+          <LayoutSettings layout={layout} onChange={setLayout} onReset={resetLayout} />
+          <TextSettings text={text} onChange={setText} onReset={resetText} />
+          <OverlaySettings overlay={overlay} onChange={setOverlay} onReset={resetOverlay} />
 
           <div className={s.actions}>
             <StatusBar status={status} />
@@ -220,6 +250,7 @@ export default function App() {
         <main className={s.main}>
           <CanvasPreview
             images={images}
+            imageType={source.imageType}
             layout={layout}
             overlay={overlay}
             text={text}

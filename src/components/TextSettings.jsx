@@ -1,5 +1,5 @@
 import React from 'react'
-import { SectionLabel, Card, Field, FieldLabel, RangeRow } from './UI'
+import { SectionLabel, Card, Field, FieldLabel, RangeRow, ResetButton } from './UI'
 import s from './TextSettings.module.css'
 import { TEXT_FONTS } from '../lib/constants'
 
@@ -15,12 +15,12 @@ const POSITIONS = [
   { value: 'bottom-right',  label: '↘' },
 ]
 
-export default function TextSettings({ text, onChange }) {
+export default function TextSettings({ text, onChange, onReset }) {
   const set = (patch) => onChange({ ...text, ...patch })
 
   return (
     <div>
-      <SectionLabel>Text</SectionLabel>
+      <SectionLabel action={<ResetButton onClick={onReset} />}>Text</SectionLabel>
       <Card>
         <Field>
           <input

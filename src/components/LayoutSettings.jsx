@@ -1,12 +1,12 @@
 import React from 'react'
-import { SectionLabel, Card, Field, FieldLabel, ToggleRow, RangeRow } from './UI'
+import { SectionLabel, Card, Field, FieldLabel, ToggleRow, RangeRow, ResetButton } from './UI'
 
-export default function LayoutSettings({ layout, onChange }) {
+export default function LayoutSettings({ layout, onChange, onReset }) {
   const set = (patch) => onChange({ ...layout, ...patch })
 
   return (
     <div>
-      <SectionLabel>Layout</SectionLabel>
+      <SectionLabel action={<ResetButton onClick={onReset} />}>Layout</SectionLabel>
       <Card>
         <Field>
           <FieldLabel>Row Direction</FieldLabel>
@@ -35,6 +35,11 @@ export default function LayoutSettings({ layout, onChange }) {
           <FieldLabel>Vertical Stagger</FieldLabel>
           <RangeRow min={0} max={200} value={layout.stagger} displayValue={`${layout.stagger}px`}
             onChange={(v) => set({ stagger: v })} />
+        </Field>
+        <Field>
+          <FieldLabel>Image Opacity</FieldLabel>
+          <RangeRow min={10} max={100} value={layout.imageOpacity} displayValue={`${layout.imageOpacity}%`}
+            onChange={(v) => set({ imageOpacity: v })} />
         </Field>
         <Field>
           <FieldLabel>X Position</FieldLabel>

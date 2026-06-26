@@ -1,8 +1,21 @@
 import React from 'react'
 import s from './UI.module.css'
 
-export function SectionLabel({ children }) {
-  return <div className={s.secLabel}>{children}</div>
+export function SectionLabel({ children, action }) {
+  return (
+    <div className={s.secLabelRow}>
+      <span className={s.secLabel}>{children}</span>
+      {action}
+    </div>
+  )
+}
+
+export function ResetButton({ onClick }) {
+  return (
+    <button className={s.resetBtn} onClick={onClick} title="Reset to defaults">
+      ↺
+    </button>
+  )
 }
 
 export function Card({ children, style }) {

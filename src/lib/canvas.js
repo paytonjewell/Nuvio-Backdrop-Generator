@@ -122,11 +122,13 @@ function drawText(ctx, text) {
 }
 
 export function renderCanvas(canvas, images, settings, text = {}) {
-  const { gap, scale, radius, stagger, angleDeg, bgColor, overlayPreset, overlayOpacity, overlayReach = 0.6, offsetX = 0, offsetY = 0 } = settings
+  const { gap, scale, radius, stagger, angleDeg, bgColor, overlayPreset, overlayOpacity, overlayReach = 0.6, offsetX = 0, offsetY = 0, imageType = 'backdrop', imageOpacity = 1 } = settings
   const W = CANVAS_W, H = CANVAS_H
 
   const cardW = Math.round(320 * scale * (W / 1920))
-  const cardH = Math.round(cardW * 9 / 16)
+  const cardH = imageType === 'poster'
+    ? Math.round(cardW * 3 / 2)
+    : Math.round(cardW * 9 / 16)
   const angleRad = -(angleDeg * Math.PI) / 180
 
   canvas.width = W
@@ -184,6 +186,7 @@ export function renderCanvas(canvas, images, settings, text = {}) {
       ctx.save()
       roundRect(ctx, x, y, cardW, cardH, radius)
       ctx.clip()
+      ctx.globalAlpha = imageOpacity
       ctx.drawImage(img, x, y, cardW, cardH)
       ctx.restore()
     }

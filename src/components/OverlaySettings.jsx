@@ -1,5 +1,5 @@
 import React from 'react'
-import { SectionLabel, Card, Field, FieldLabel, RangeRow } from './UI'
+import { SectionLabel, Card, Field, FieldLabel, RangeRow, ResetButton } from './UI'
 import s from './OverlaySettings.module.css'
 
 const PRESETS = [
@@ -11,12 +11,12 @@ const PRESETS = [
   { value: 'none', label: '✕ None' },
 ]
 
-export default function OverlaySettings({ overlay, onChange }) {
+export default function OverlaySettings({ overlay, onChange, onReset }) {
   const set = (patch) => onChange({ ...overlay, ...patch })
 
   return (
     <div>
-      <SectionLabel>Overlay</SectionLabel>
+      <SectionLabel action={<ResetButton onClick={onReset} />}>Overlay</SectionLabel>
       <Card>
         <Field>
           <div className={s.presetGrid}>

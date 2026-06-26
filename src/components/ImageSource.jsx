@@ -1,9 +1,9 @@
 import React from "react";
-import { SectionLabel, Card, Field, FieldLabel, TabGroup, Notice } from "./UI";
+import { SectionLabel, Card, Field, FieldLabel, ToggleRow, TabGroup, Notice, ResetButton } from "./UI";
 import { MOVIE_GENRES, TV_GENRES, MOVIE_SORT_OPTIONS, TV_SORT_OPTIONS, WATCH_PROVIDERS } from "../lib/constants";
 
-export default function ImageSource({ source, onChange }) {
-  const { tab, filter, trakt } = source;
+export default function ImageSource({ source, onChange, onReset }) {
+  const { tab, filter, trakt, imageType } = source;
 
   const genres = filter.type === "movie" ? MOVIE_GENRES : TV_GENRES;
   const allSortOptions = filter.type === "movie" ? MOVIE_SORT_OPTIONS : TV_SORT_OPTIONS;
@@ -16,8 +16,18 @@ export default function ImageSource({ source, onChange }) {
 
   return (
     <div>
-      <SectionLabel>Image Source</SectionLabel>
+      <SectionLabel action={<ResetButton onClick={onReset} />}>Image Source</SectionLabel>
       <Card>
+        <Field>
+          <ToggleRow
+            options={[
+              { value: 'backdrop', label: 'Backdrops' },
+              { value: 'poster', label: 'Posters' },
+            ]}
+            value={imageType}
+            onChange={(v) => onChange({ ...source, imageType: v })}
+          />
+        </Field>
         <TabGroup
           tabs={[
             { value: "filter", label: "TMDB Filter" },

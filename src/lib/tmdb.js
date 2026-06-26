@@ -23,7 +23,7 @@ export async function validateTraktKey(key) {
   return res.ok
 }
 
-export async function fetchFilterImages({ type, sort, genre, provider, apiKey }) {
+export async function fetchFilterImages({ type, sort, genre, provider, imageType = 'backdrop', apiKey }) {
   let endpoint, params = {}
 
   if (sort === 'trending_week' && !genre && !provider) {
@@ -48,7 +48,8 @@ export async function fetchFilterImages({ type, sort, genre, provider, apiKey })
   while (paths.size < 200) {
     const data = await fetchTMDB(endpoint, { ...params, page }, apiKey)
     for (const item of data.results) {
-      if (item.backdrop_path) paths.add(item.backdrop_path)
+      const path = imageType === 'poster' ? item.poster_path : item.backdrop_path
+      if (path) paths.add(path)
     }
     if (page >= Math.min(data.total_pages, 20)) break
     page++
@@ -56,7 +57,7 @@ export async function fetchFilterImages({ type, sort, genre, provider, apiKey })
   return [...paths]
 }
 
-export async function fetchTraktImages({ url, traktKey, apiKey }) {
+export async function fetchTraktImages({ url, imageType = 'backdrop', traktKey, apiKey }) {
   const m = url.match(/trakt\.tv\/users\/([^/]+)\/lists\/([^/?]+)/)
   if (!m) throw new Error('Invalid Trakt URL format')
   const [, user, list] = m
@@ -67,24 +68,28 @@ export async function fetchTraktImages({ url, traktKey, apiKey }) {
   )
   if (!res.ok) throw new Error('Trakt error ' + res.status + ' — check Client ID and that the list is public')
   const items = await res.json()
-  const paths = []
-  for (const item of items) {
-    let tmdbId, tmdbType
-    if (item.type === 'movie' && item.movie?.ids?.tmdb) {
-      tmdbId = item.movie.ids.tmdb
-      tmdbType = 'movie'
-    } else if (item.type === 'show' && item.show?.ids?.tmdb) {
-      tmdbId = item.show.ids.tmdb
-      tmdbType = 'tv'
-    } else {
-      continue
-    }
-    try {
-      const data = await fetchTMDB(`/${tmdbType}/${tmdbId}`, {}, apiKey)
-      if (data.backdrop_path) paths.push(data.backdrop_path)
-    } catch (e) { /* skip */ }
-  }
-  return paths
+
+  const lookups = items
+    .map(item => {
+      if (item.type === 'movie' && item.movie?.ids?.tmdb)
+        return { tmdbId: item.movie.ids.tmdb, tmdbType: 'movie' }
+      if (item.type === 'show' && item.show?.ids?.tmdb)
+        return { tmdbId: item.show.ids.tmdb, tmdbType: 'tv' }
+      return null
+    })
+    .filter(Boolean)
+
+  const results = await Promise.allSettled(
+    lookups.map(({ tmdbId, tmdbType }) =>
+      fetchTMDB(`/${tmdbType}/${tmdbId}`, {}, apiKey).then(data =>
+        (imageType === 'poster' ? data.poster_path : data.backdrop_path) || null
+      )
+    )
+  )
+
+  return results
+    .filter(r => r.status === 'fulfilled' && r.value)
+    .map(r => r.value)
 }
 
 export function loadImages(paths) {
