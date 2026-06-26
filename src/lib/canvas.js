@@ -70,8 +70,10 @@ export function renderCanvas(canvas, images, settings) {
   canvas.height = H
   const ctx = canvas.getContext('2d')
 
-  ctx.fillStyle = bgColor
-  ctx.fillRect(0, 0, W, H)
+  if (bgColor !== 'transparent') {
+    ctx.fillStyle = bgColor
+    ctx.fillRect(0, 0, W, H)
+  }
 
   const diag = Math.ceil(Math.sqrt(W * W + H * H))
   const numCols = Math.ceil(diag / (cardW + gap)) + 4

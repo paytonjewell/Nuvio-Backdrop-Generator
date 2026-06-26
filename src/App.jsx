@@ -15,7 +15,7 @@ const DEFAULT_SOURCE = {
 }
 
 const DEFAULT_LAYOUT = { angle: 12, gap: 20, scale: 120, radius: 8, stagger: 120, offsetX: 0, offsetY: 0 }
-const DEFAULT_OVERLAY = { preset: 'cinematic', opacity: 0.85, bgColor: '#0a0a0f' }
+const DEFAULT_OVERLAY = { preset: 'cinematic', opacity: 0.85, bgColor: 'transparent' }
 
 function loadStored(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback } catch { return fallback }

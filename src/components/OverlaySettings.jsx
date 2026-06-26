@@ -38,11 +38,21 @@ export default function OverlaySettings({ overlay, onChange }) {
             onChange={(v) => set({ opacity: v / 100 })} />
         </Field>
         <Field>
-          <FieldLabel>Background Color</FieldLabel>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input type="color" value={overlay.bgColor}
-              onChange={e => set({ bgColor: e.target.value })} />
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>Canvas fill behind images</span>
+          <FieldLabel>Background</FieldLabel>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={overlay.bgColor === 'transparent'}
+                onChange={e => set({ bgColor: e.target.checked ? 'transparent' : '#0a0a0f' })}
+                style={{ accentColor: '#6c63ff', cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Transparent</span>
+            </label>
+            {overlay.bgColor !== 'transparent' && (
+              <input type="color" value={overlay.bgColor}
+                onChange={e => set({ bgColor: e.target.value })} />
+            )}
           </div>
         </Field>
       </Card>
