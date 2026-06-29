@@ -17,7 +17,7 @@ export default function OverlaySettings({ overlay, onChange, onReset }) {
 
   return (
     <div>
-      <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />}>Overlay</SectionLabel>
+      <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />} onClick={toggle}>Overlay</SectionLabel>
       <Collapsible open={!collapsed}>
       <Card onReset={onReset}>
         <Field>

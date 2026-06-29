@@ -229,6 +229,7 @@ export default function ImageSource({ source, onChange, onReset, mdblistKey }) {
     <div>
       <SectionLabel
         action={<CollapseButton collapsed={collapsed} onClick={toggle} />}
+        onClick={toggle}
       >
         Image Source
       </SectionLabel>

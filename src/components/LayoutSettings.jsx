@@ -7,7 +7,7 @@ export default function LayoutSettings({ layout, onChange, imageType, onImageTyp
 
   return (
     <div>
-      <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />}>Layout</SectionLabel>
+      <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />} onClick={toggle}>Layout</SectionLabel>
       <Collapsible open={!collapsed}>
         <Card onReset={onReset}>
           <Field>

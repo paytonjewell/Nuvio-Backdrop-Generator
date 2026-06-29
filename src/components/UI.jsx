@@ -22,10 +22,16 @@ export function useCollapsed(storageKey, defaultCollapsed = false) {
   return { collapsed, toggle }
 }
 
-export function SectionLabel({ children, action }) {
+export function SectionLabel({ children, action, onClick }) {
   return (
     <div className={s.secLabelRow}>
-      <span className={s.secLabel}>{children}</span>
+      <span
+        className={s.secLabel}
+        onClick={onClick}
+        style={onClick ? { cursor: 'pointer', userSelect: 'none' } : undefined}
+      >
+        {children}
+      </span>
       {action}
     </div>
   );

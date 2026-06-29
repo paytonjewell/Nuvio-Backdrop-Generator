@@ -170,7 +170,7 @@ export default function ApiKeys({
 
   return (
     <div>
-      <SectionLabel action={action}>API Keys</SectionLabel>
+      <SectionLabel action={action} onClick={toggle}>API Keys</SectionLabel>
       <Collapsible open={!collapsed}>
         <Card>
           <KeyInput

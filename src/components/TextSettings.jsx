@@ -21,7 +21,7 @@ export default function TextSettings({ text, onChange, onReset }) {
 
   return (
     <div>
-      <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />}>Text</SectionLabel>
+      <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />} onClick={toggle}>Text</SectionLabel>
       <Collapsible open={!collapsed}>
       <Card onReset={onReset}>
         <Field>
