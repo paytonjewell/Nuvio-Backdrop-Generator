@@ -330,25 +330,11 @@ export default function ImageSource({ source, onChange, onReset, mdblistKey }) {
                 >
                   <option value="">Any Language</option>
                   {LANGUAGES.map((l) => (
-                    <option key={l.code} value={l.code}>{l.name}</option>
+                    <option key={l.code} value={l.code}>
+                      {l.name}
+                    </option>
                   ))}
                 </select>
-              </Field>
-              <Field>
-                <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={filter.excludeNC17 || false}
-                    onChange={(e) => setFilter({ excludeNC17: e.target.checked })}
-                    style={{ accentColor: "#6c63ff", cursor: "pointer", marginTop: 1, flexShrink: 0 }}
-                  />
-                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 500, lineHeight: 1.4 }}>
-                    {filter.type === "movie" ? "Exclude NC-17" : "Exclude TV-MA"}
-                    <span style={{ display: "block", fontSize: 10, color: "rgba(255,255,255,0.25)", fontWeight: 400, marginTop: 2 }}>
-                      Best-effort — applies US certification filter. May not catch unrated international titles.
-                    </span>
-                  </span>
-                </label>
               </Field>
               {!isTimeSensitive && (
                 <Field>
@@ -370,6 +356,68 @@ export default function ImageSource({ source, onChange, onReset, mdblistKey }) {
                   </select>
                 </Field>
               )}
+              <Field>
+                <label
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 8,
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={filter.excludeNC17 || false}
+                    onChange={(e) =>
+                      setFilter({ excludeNC17: e.target.checked })
+                    }
+                    style={{
+                      accentColor: "#6c63ff",
+                      cursor: "pointer",
+                      marginTop: 1,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "rgba(255,255,255,0.5)",
+                      fontWeight: 500,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    {filter.type === "movie"
+                      ? "Exclude NC-17"
+                      : "Exclude TV-MA"}
+                    <span
+                      title="Best-effort only. Relies on TMDB certification data, which is incomplete — films without a US rating entry in TMDB will still appear."
+                      style={{
+                        color: "rgba(255,255,255,0.25)",
+                        cursor: "help",
+                        lineHeight: 1,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 12 12"
+                        fill="none"
+                      >
+                        <circle cx="6" cy="6" r="5.5" stroke="currentColor" />
+                        <path
+                          d="M6 5.5v3M6 3.5v.5"
+                          stroke="currentColor"
+                          strokeWidth="1.2"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </span>
+                  </span>
+                </label>
+              </Field>
             </>
           )}
 
