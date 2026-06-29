@@ -1,41 +1,64 @@
 import React from "react";
 import {
-  SectionLabel, Card, Field, FieldLabel, TabGroup, Notice,
-  CollapseButton, Collapsible, useCollapsed,
+  SectionLabel,
+  Card,
+  Field,
+  FieldLabel,
+  TabGroup,
+  Notice,
+  CollapseButton,
+  Collapsible,
+  useCollapsed,
 } from "./UI";
 import {
-  MOVIE_GENRES, TV_GENRES, MOVIE_SORT_OPTIONS, TV_SORT_OPTIONS,
-  WATCH_PROVIDERS, DECADES,
+  MOVIE_GENRES,
+  TV_GENRES,
+  MOVIE_SORT_OPTIONS,
+  TV_SORT_OPTIONS,
+  WATCH_PROVIDERS,
+  DECADES,
 } from "../lib/constants";
 
 export default function ImageSource({ source, onChange, onReset }) {
   const { tab, filter, trakt, mdblist } = source;
-  const { collapsed, toggle } = useCollapsed('nuvio_collapsed_imagesource');
+  const { collapsed, toggle } = useCollapsed("nuvio_collapsed_imagesource");
 
   const genres = filter.type === "movie" ? MOVIE_GENRES : TV_GENRES;
-  const allSortOptions = filter.type === "movie" ? MOVIE_SORT_OPTIONS : TV_SORT_OPTIONS;
+  const allSortOptions =
+    filter.type === "movie" ? MOVIE_SORT_OPTIONS : TV_SORT_OPTIONS;
   const sortOptions = filter.provider
     ? allSortOptions.filter((o) => o.value !== "trending_week")
     : allSortOptions;
 
-  const TIME_SENSITIVE_SORTS = ["trending_week", "now_playing", "upcoming", "on_the_air", "airing_today"];
+  const TIME_SENSITIVE_SORTS = [
+    "trending_week",
+    "now_playing",
+    "upcoming",
+    "on_the_air",
+    "airing_today",
+  ];
   const isTimeSensitive = TIME_SENSITIVE_SORTS.includes(filter.sort);
 
-  const setFilter = (patch) => onChange({ ...source, filter: { ...filter, ...patch } });
-  const setTrakt = (patch) => onChange({ ...source, trakt: { ...trakt, ...patch } });
-  const setMdblist = (patch) => onChange({ ...source, mdblist: { ...mdblist, ...patch } });
+  const setFilter = (patch) =>
+    onChange({ ...source, filter: { ...filter, ...patch } });
+  const setTrakt = (patch) =>
+    onChange({ ...source, trakt: { ...trakt, ...patch } });
+  const setMdblist = (patch) =>
+    onChange({ ...source, mdblist: { ...mdblist, ...patch } });
 
   return (
     <div>
-      <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />}>
+      <SectionLabel
+        action={<CollapseButton collapsed={collapsed} onClick={toggle} />}
+      >
         Image Source
       </SectionLabel>
       <Collapsible open={!collapsed}>
         <Card onReset={onReset}>
           <TabGroup
             tabs={[
-              { value: "filter",  label: "TMDB Filter" },
-              { value: "trakt",   label: "Trakt" },
+              { value: "filter", label: "TMDB Filter" },
+              { value: "trakt", label: "Trakt" },
               { value: "mdblist", label: "MDBList" },
             ]}
             value={tab}
@@ -48,7 +71,13 @@ export default function ImageSource({ source, onChange, onReset }) {
                 <FieldLabel>Content Type</FieldLabel>
                 <select
                   value={filter.type}
-                  onChange={(e) => setFilter({ type: e.target.value, sort: "popular", genre: "" })}
+                  onChange={(e) =>
+                    setFilter({
+                      type: e.target.value,
+                      sort: "popular",
+                      genre: "",
+                    })
+                  }
                 >
                   <option value="movie">Movies</option>
                   <option value="tv">TV Shows</option>
@@ -69,7 +98,9 @@ export default function ImageSource({ source, onChange, onReset }) {
                   }}
                 >
                   {sortOptions.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
                   ))}
                 </select>
               </Field>
@@ -82,7 +113,9 @@ export default function ImageSource({ source, onChange, onReset }) {
                   >
                     <option value="">Any</option>
                     {WATCH_PROVIDERS.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
                     ))}
                   </select>
                 </Field>
@@ -95,7 +128,9 @@ export default function ImageSource({ source, onChange, onReset }) {
                 >
                   <option value="">Any Genre</option>
                   {genres.map((g) => (
-                    <option key={g.id} value={g.id}>{g.name}</option>
+                    <option key={g.id} value={g.id}>
+                      {g.name}
+                    </option>
                   ))}
                 </select>
               </Field>
@@ -104,11 +139,17 @@ export default function ImageSource({ source, onChange, onReset }) {
                   <FieldLabel>Decade (optional)</FieldLabel>
                   <select
                     value={filter.decade ?? ""}
-                    onChange={(e) => setFilter({ decade: e.target.value ? Number(e.target.value) : null })}
+                    onChange={(e) =>
+                      setFilter({
+                        decade: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
                   >
                     <option value="">Any Era</option>
                     {DECADES.map((d) => (
-                      <option key={d.value} value={d.value}>{d.label}</option>
+                      <option key={d.value} value={d.value}>
+                        {d.label}
+                      </option>
                     ))}
                   </select>
                 </Field>
@@ -127,9 +168,6 @@ export default function ImageSource({ source, onChange, onReset }) {
                   placeholder="https://trakt.tv/users/username/lists/listname"
                 />
               </Field>
-              <Notice style={{ marginTop: 8 }}>
-                List must be public. Trakt Client ID required above.
-              </Notice>
             </>
           )}
 
@@ -144,9 +182,6 @@ export default function ImageSource({ source, onChange, onReset }) {
                   placeholder="https://mdblist.com/lists/username/listname"
                 />
               </Field>
-              <Notice style={{ marginTop: 8 }}>
-                MDBList API key required (even for public lists). Free key available at mdblist.com.
-              </Notice>
             </>
           )}
         </Card>

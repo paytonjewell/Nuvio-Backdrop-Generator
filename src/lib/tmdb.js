@@ -38,6 +38,24 @@ export async function validateMDBListKey(key) {
   return res.ok
 }
 
+const ID_CACHE_KEY = 'nuvio_tmdb_ids'
+const ID_CACHE_TTL = 30 * 24 * 60 * 60 * 1000  // 30 days
+const ID_CACHE_MAX = 10_000
+
+function loadIdCache() {
+  try { return JSON.parse(localStorage.getItem(ID_CACHE_KEY) || '{}') } catch { return {} }
+}
+
+function saveIdCache(cache) {
+  try {
+    const keys = Object.keys(cache)
+    const trimmed = keys.length > ID_CACHE_MAX
+      ? Object.fromEntries(keys.slice(-ID_CACHE_MAX).map(k => [k, cache[k]]))
+      : cache
+    localStorage.setItem(ID_CACHE_KEY, JSON.stringify(trimmed))
+  } catch {}
+}
+
 const DISCOVER_SORT_MAP = {
   popular:        'popularity.desc',
   top_rated:      'vote_average.desc',
@@ -66,14 +84,25 @@ export async function fetchMDBListImages({ url, mdblistKey, apiKey }) {
     ...(data.shows  || []).map(item => ({ tmdbId: item.ids?.tmdb || item.id, tmdbType: 'tv'    })),
   ].filter(item => item.tmdbId)
 
+  const idCache = loadIdCache()
+  const newCacheEntries = {}
+
   const results = await batchedAllSettled(
     items,
-    ({ tmdbId, tmdbType }) =>
-      fetchTMDB(`/${tmdbType}/${tmdbId}`, {}, apiKey).then(d => ({
-        backdrop: d.backdrop_path || null,
-        poster:   d.poster_path   || null,
-      }))
+    async ({ tmdbId, tmdbType }) => {
+      const key = `${tmdbType}:${tmdbId}`
+      const cached = idCache[key]
+      if (cached && Date.now() - cached.ts < ID_CACHE_TTL)
+        return { backdrop: cached.backdrop, poster: cached.poster }
+      const d = await fetchTMDB(`/${tmdbType}/${tmdbId}`, {}, apiKey)
+      const entry = { backdrop: d.backdrop_path || null, poster: d.poster_path || null, ts: Date.now() }
+      newCacheEntries[key] = entry
+      return { backdrop: entry.backdrop, poster: entry.poster }
+    }
   )
+
+  if (Object.keys(newCacheEntries).length > 0)
+    saveIdCache({ ...idCache, ...newCacheEntries })
 
   const fulfilled = results.filter(r => r.status === 'fulfilled').map(r => r.value)
   return {
@@ -154,14 +183,25 @@ export async function fetchTraktImages({ url, traktKey, apiKey }) {
     })
     .filter(Boolean)
 
+  const idCache = loadIdCache()
+  const newCacheEntries = {}
+
   const results = await batchedAllSettled(
     lookups,
-    ({ tmdbId, tmdbType }) =>
-      fetchTMDB(`/${tmdbType}/${tmdbId}`, {}, apiKey).then(data => ({
-        backdrop: data.backdrop_path || null,
-        poster: data.poster_path || null,
-      }))
+    async ({ tmdbId, tmdbType }) => {
+      const key = `${tmdbType}:${tmdbId}`
+      const cached = idCache[key]
+      if (cached && Date.now() - cached.ts < ID_CACHE_TTL)
+        return { backdrop: cached.backdrop, poster: cached.poster }
+      const data = await fetchTMDB(`/${tmdbType}/${tmdbId}`, {}, apiKey)
+      const entry = { backdrop: data.backdrop_path || null, poster: data.poster_path || null, ts: Date.now() }
+      newCacheEntries[key] = entry
+      return { backdrop: entry.backdrop, poster: entry.poster }
+    }
   )
+
+  if (Object.keys(newCacheEntries).length > 0)
+    saveIdCache({ ...idCache, ...newCacheEntries })
 
   const fulfilled = results.filter(r => r.status === 'fulfilled').map(r => r.value)
   return {
