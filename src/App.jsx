@@ -39,6 +39,8 @@ const DEFAULT_SOURCE = {
     genre: "",
     provider: "",
     decade: null,
+    language: "",
+    excludeNC17: false,
   },
   trakt: { url: "" },
   mdblist: { mode: "url", url: "", listId: "", selectedListName: "", searchUsername: "", mediaType: "" },
@@ -285,6 +287,8 @@ export default function App() {
           genre: source.filter.genre,
           provider: source.filter.provider,
           decade: source.filter.decade,
+          language: source.filter.language,
+          excludeNC17: source.filter.excludeNC17,
           apiKey: tmdbKey,
         });
       } else if (source.tab === "trakt") {

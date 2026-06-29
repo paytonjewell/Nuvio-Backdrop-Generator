@@ -127,16 +127,22 @@ export async function fetchMDBListImages({ url, listId, mediaType, mdblistKey, a
 }
 
 // Always returns both { backdrop: [...], poster: [...] }
-export async function fetchFilterImages({ type, sort, genre, provider, decade, apiKey }) {
+export async function fetchFilterImages({ type, sort, genre, provider, decade, language, excludeNC17, apiKey }) {
   let endpoint, params = {}
 
-  const useDiscover = !!(genre || provider || decade)
+  const useDiscover = !!(genre || provider || decade || language || excludeNC17)
 
   if (sort === 'trending_week' && !useDiscover) {
     endpoint = `/trending/${type}/week`
   } else if (useDiscover) {
     endpoint = `/discover/${type}`
     params = { sort_by: DISCOVER_SORT_MAP[sort] || 'popularity.desc', include_adult: 'false' }
+    if (sort === 'top_rated') params['vote_count.gte'] = '500'
+    if (language) params.with_original_language = language
+    if (excludeNC17) {
+      params.certification_country = 'US'
+      params['certification.lte'] = type === 'movie' ? 'R' : 'TV-14'
+    }
     if (genre === 'anime') params.with_keywords = '210024'
     else if (genre) params.with_genres = genre
     if (provider) {

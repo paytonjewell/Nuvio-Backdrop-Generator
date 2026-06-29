@@ -17,6 +17,7 @@ import {
   TV_SORT_OPTIONS,
   WATCH_PROVIDERS,
   DECADES,
+  LANGUAGES,
 } from "../lib/constants";
 import { fetchMDBLists } from "../lib/tmdb";
 
@@ -320,6 +321,34 @@ export default function ImageSource({ source, onChange, onReset, mdblistKey }) {
                     </option>
                   ))}
                 </select>
+              </Field>
+              <Field>
+                <FieldLabel>Language (optional)</FieldLabel>
+                <select
+                  value={filter.language || ""}
+                  onChange={(e) => setFilter({ language: e.target.value })}
+                >
+                  <option value="">Any Language</option>
+                  {LANGUAGES.map((l) => (
+                    <option key={l.code} value={l.code}>{l.name}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field>
+                <label style={{ display: "flex", alignItems: "flex-start", gap: 8, cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={filter.excludeNC17 || false}
+                    onChange={(e) => setFilter({ excludeNC17: e.target.checked })}
+                    style={{ accentColor: "#6c63ff", cursor: "pointer", marginTop: 1, flexShrink: 0 }}
+                  />
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 500, lineHeight: 1.4 }}>
+                    {filter.type === "movie" ? "Exclude NC-17" : "Exclude TV-MA"}
+                    <span style={{ display: "block", fontSize: 10, color: "rgba(255,255,255,0.25)", fontWeight: 400, marginTop: 2 }}>
+                      Best-effort — applies US certification filter. May not catch unrated international titles.
+                    </span>
+                  </span>
+                </label>
               </Field>
               {!isTimeSensitive && (
                 <Field>
