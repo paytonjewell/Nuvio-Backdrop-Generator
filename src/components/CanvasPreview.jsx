@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from "react";
-import { renderCanvas } from "../lib/canvas";
+import React, { useRef, useEffect, useState } from "react";
+import { renderCanvas, hitTestCanvas, getPathFromSrc } from "../lib/canvas";
 import s from "./CanvasPreview.module.css";
 
 export default function CanvasPreview({
@@ -9,25 +9,41 @@ export default function CanvasPreview({
   overlay,
   text,
   resolution = { width: 1920, height: 1080 },
+  excludedPaths = [],
+  onToggleExclusion,
+  onExitEditMode,
   onShuffle,
   triggerRender,
 }) {
   const canvasRef = useRef(null);
   const hasImages = images.length > 0;
+  const [editMode, setEditMode] = useState(false);
+  const settingsRef = useRef({});
+
+  const handleCanvasClick = (e) => {
+    if (!editMode || !canvasRef.current || images.length === 0) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const scaleX = canvasRef.current.width / rect.width;
+    const scaleY = canvasRef.current.height / rect.height;
+    const canvasX = (e.clientX - rect.left) * scaleX;
+    const canvasY = (e.clientY - rect.top) * scaleY;
+    const idx = hitTestCanvas(canvasX, canvasY, images, settingsRef.current);
+    if (idx !== null) {
+      const path = getPathFromSrc(images[idx].src);
+      if (path) onToggleExclusion(path);
+    }
+  };
 
   useEffect(() => {
     if (!hasImages || !canvasRef.current) return;
     const render = async () => {
       await document.fonts.ready;
-      renderCanvas(
-        canvasRef.current,
-        images,
-        {
+      const settings = {
           gap: layout.gap,
           scale: layout.scale / 100,
           radius: layout.radius,
           stagger: layout.stagger,
-        autoStagger: layout.autoStagger,
+          autoStagger: layout.autoStagger,
           angleDeg: layout.angle,
           offsetX: layout.offsetX,
           offsetY: layout.offsetY,
@@ -39,12 +55,12 @@ export default function CanvasPreview({
           imageType,
           width: resolution.width,
           height: resolution.height,
-        },
-        text,
-      );
+        };
+      settingsRef.current = settings;
+      renderCanvas(canvasRef.current, images, settings, text, excludedPaths);
     };
     render();
-  }, [images, layout, overlay, text, resolution, triggerRender]);
+  }, [images, layout, overlay, text, resolution, excludedPaths, triggerRender]);
 
   return (
     <div className={s.wrap}>
@@ -78,6 +94,18 @@ export default function CanvasPreview({
               <path d="M22 18h-6.041a4 4 0 0 1-3.3-1.8l-.359-.45" />
             </svg>{" "}
             Shuffle Images
+          </button>
+        )}
+        {hasImages && (
+          <button
+            className={`${s.shuffleBtn} ${editMode ? s.editBtnActive : ''}`}
+            onClick={() => {
+              if (editMode && onExitEditMode) onExitEditMode();
+              setEditMode(m => !m);
+            }}
+            title={editMode ? 'Exit edit mode' : 'Click images to exclude them from future generations'}
+          >
+            {editMode ? '✕ Done' : '✎ Edit'}
           </button>
         )}
       </div>
@@ -115,7 +143,8 @@ export default function CanvasPreview({
         <canvas
           ref={canvasRef}
           className={s.canvas}
-          style={{ display: hasImages ? "block" : "none" }}
+          style={{ display: hasImages ? "block" : "none", cursor: editMode ? "crosshair" : "default" }}
+          onClick={handleCanvasClick}
         />
       </div>
     </div>

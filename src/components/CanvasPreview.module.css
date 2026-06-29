@@ -37,6 +37,16 @@
   cursor: not-allowed;
 }
 
+.editBtnActive {
+  background: rgba(220, 38, 38, 0.2);
+  border-color: rgba(220, 38, 38, 0.4);
+  color: rgba(255, 100, 100, 0.9);
+}
+.editBtnActive:hover {
+  background: rgba(220, 38, 38, 0.3);
+  color: rgba(255, 140, 140, 1);
+}
+
 .toolbarLabel {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.3);

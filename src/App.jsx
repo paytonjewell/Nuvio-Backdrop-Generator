@@ -121,6 +121,10 @@ export default function App() {
   const [resolution, setResolution] = useState(() =>
     loadStored("nuvio_resolution", { width: 1920, height: 1080 }),
   );
+  const [excludedPaths, setExcludedPaths] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("nuvio_excluded") || "[]")) }
+    catch { return new Set() }
+  });
 
   const [images, setImages] = useState([]); // loaded Image objects, shuffled
   const [rawImages, setRawImages] = useState([]); // unshuffled, for re-shuffling
@@ -147,6 +151,9 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("nuvio_resolution", JSON.stringify(resolution));
   }, [resolution]);
+  useEffect(() => {
+    localStorage.setItem("nuvio_excluded", JSON.stringify([...excludedPaths]));
+  }, [excludedPaths]);
 
   // Persist source to localStorage (debounced)
   useEffect(() => {
@@ -207,10 +214,37 @@ export default function App() {
     restore();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Re-render canvas whenever layout/overlay changes (images stay the same)
+  const regenerateWithExclusions = async () => {
+    try {
+      const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
+      const cachedPaths =
+        stored.sourceKey === getSourceKey(source) ? stored[source.imageType] : null;
+      if (!cachedPaths?.length) return;
+      const filtered = cachedPaths.filter((p) => !excludedPaths.has(p));
+      if (!filtered.length) return;
+      setStatus({ state: "loading", message: "Updating backdrop…" });
+      const loaded = await loadImages(filtered);
+      if (loaded.length > 0) {
+        setRawImages(loaded);
+        setImages(loaded);
+        setCanDownload(true);
+        setStatus({ state: "success", message: `Done — ${loaded.length} unique backdrops, zero repeats.` });
+      }
+    } catch {}
+  };
+
+  const toggleExclusion = (path) => {
+    setExcludedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path); else next.add(path);
+      return next;
+    });
+  };
+
+  // Re-render canvas whenever layout/overlay/exclusions change (images stay the same)
   useEffect(() => {
     if (images.length > 0) setRenderTick((t) => t + 1);
-  }, [layout, overlay, text]);
+  }, [layout, overlay, text, excludedPaths]);
 
   // Apply mode defaults and restore cached images when switching between backdrops/posters
   const prevImageType = useRef(source.imageType);
@@ -322,7 +356,7 @@ export default function App() {
         );
       } catch {}
 
-      const activePaths = shuffledPaths[source.imageType];
+      const activePaths = shuffledPaths[source.imageType].filter(p => !excludedPaths.has(p));
       if (activePaths.length === 0) {
         setStatus({
           state: "error",
@@ -463,6 +497,9 @@ export default function App() {
             overlay={overlay}
             text={text}
             resolution={resolution}
+            excludedPaths={[...excludedPaths]}
+            onToggleExclusion={toggleExclusion}
+            onExitEditMode={regenerateWithExclusions}
             onShuffle={reshuffleImages}
             triggerRender={renderTick}
           />

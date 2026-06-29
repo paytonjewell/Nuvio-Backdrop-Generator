@@ -1,6 +1,74 @@
 export const CANVAS_W = 1920
 export const CANVAS_H = 1080
 
+export function getPathFromSrc(src) {
+  const m = src.match(/\/p\/w\d+(\/.+)$/)
+  return m ? m[1] : null
+}
+
+function buildColOrder(diag, cardW, gap) {
+  const numCols = Math.ceil(diag / (cardW + gap)) + 4
+  const visibleCols = numCols - 4
+  const centerCol = Math.min(Math.round((diag - cardW) / (2 * (cardW + gap))), visibleCols - 1)
+  const colOrder = []
+  for (let d = 0; d < visibleCols; d++) {
+    if (d === 0) { colOrder.push(centerCol); continue }
+    if (centerCol + d < visibleCols) colOrder.push(centerCol + d)
+    if (centerCol - d >= 0) colOrder.push(centerCol - d)
+  }
+  for (let col = visibleCols; col < numCols; col++) colOrder.push(col)
+  return { colOrder, numCols, numRows: Math.ceil(diag / (Math.ceil(Math.sqrt(2)) + gap)) + 4 }
+}
+
+// Returns the index into the images array that was drawn at the given canvas-pixel coordinate,
+// or null if no image was found at that position.
+export function hitTestCanvas(canvasX, canvasY, images, settings) {
+  const { gap, scale, stagger, autoStagger = true, angleDeg, offsetX = 0, offsetY = 0,
+          imageType = 'backdrop', width = CANVAS_W, height = CANVAS_H } = settings
+  const W = width, H = height
+  const cardW = Math.round(320 * scale * (W / 1920))
+  const cardH = imageType === 'poster' ? Math.round(cardW * 3 / 2) : Math.round(cardW * 9 / 16)
+  const effectiveStagger = autoStagger ? Math.round((cardH + gap) / 2) : stagger
+  const angleRad = -(angleDeg * Math.PI) / 180
+  const diag = Math.ceil(Math.sqrt(W * W + H * H))
+  const numCols = Math.ceil(diag / (cardW + gap)) + 4
+  const numRows = Math.ceil(diag / (cardH + gap)) + 4
+  const visibleCols = numCols - 4
+  const centerCol = Math.min(Math.round((diag - cardW) / (2 * (cardW + gap))), visibleCols - 1)
+
+  // Inverse transform: canvas pixel → grid pixel
+  const dx = canvasX - (W / 2 + offsetX)
+  const dy = canvasY - (H / 2 + offsetY)
+  const cos_a = Math.cos(angleRad), sin_a = Math.sin(angleRad)
+  const gx = dx * cos_a + dy * sin_a + diag / 2
+  const gy = -dx * sin_a + dy * cos_a + diag / 2
+
+  const colOrder = []
+  for (let d = 0; d < visibleCols; d++) {
+    if (d === 0) { colOrder.push(centerCol); continue }
+    if (centerCol + d < visibleCols) colOrder.push(centerCol + d)
+    if (centerCol - d >= 0) colOrder.push(centerCol - d)
+  }
+  for (let col = visibleCols; col < numCols; col++) colOrder.push(col)
+
+  let imgIdx = 0
+  for (const col of colOrder) {
+    const rowOffset = col % 2 === 0 ? 0 : effectiveStagger
+    for (let row = -1; row < numRows; row++) {
+      const cardGy = row * (cardH + gap) + cardH / 2 + rowOffset
+      const cardGx = col * (cardW + gap) + cardW / 2
+      const projY = (cardGx - diag / 2) * sin_a + (cardGy - diag / 2) * cos_a + H / 2
+      if (projY < -(cardH / 2) || projY > H + cardH / 2) continue
+      if (imgIdx >= images.length) return null
+      const cardX = col * (cardW + gap), cardY = row * (cardH + gap) + rowOffset
+      if (gx >= cardX && gx <= cardX + cardW && gy >= cardY && gy <= cardY + cardH)
+        return imgIdx
+      imgIdx++
+    }
+  }
+  return null
+}
+
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath()
   ctx.moveTo(x + r, y)
@@ -120,7 +188,8 @@ function drawText(ctx, text, W = CANVAS_W, H = CANVAS_H) {
   ctx.restore()
 }
 
-export function renderCanvas(canvas, images, settings, text = {}) {
+export function renderCanvas(canvas, images, settings, text = {}, excludedPaths = []) {
+  const excluded = new Set(excludedPaths)
   const { gap, scale, radius, stagger, autoStagger = true, angleDeg, bgColor, overlayPreset, overlayOpacity, overlayReach = 0.6, offsetX = 0, offsetY = 0, imageType = 'backdrop', imageOpacity = 1, width = CANVAS_W, height = CANVAS_H } = settings
   const W = width, H = height
 
@@ -188,6 +257,23 @@ export function renderCanvas(canvas, images, settings, text = {}) {
       ctx.clip()
       ctx.globalAlpha = imageOpacity
       ctx.drawImage(img, x, y, cardW, cardH)
+      if (excluded.size > 0) {
+        const imgPath = getPathFromSrc(img.src)
+        if (imgPath && excluded.has(imgPath)) {
+          ctx.globalAlpha = 0.65
+          ctx.fillStyle = 'rgba(220,38,38,0.85)'
+          ctx.fillRect(x, y, cardW, cardH)
+          ctx.globalAlpha = 1
+          ctx.strokeStyle = 'rgba(255,255,255,0.9)'
+          ctx.lineWidth = Math.max(2, cardW * 0.03)
+          ctx.lineCap = 'round'
+          const pad = cardW * 0.2
+          ctx.beginPath()
+          ctx.moveTo(x + pad, y + pad); ctx.lineTo(x + cardW - pad, y + cardH - pad)
+          ctx.moveTo(x + cardW - pad, y + pad); ctx.lineTo(x + pad, y + cardH - pad)
+          ctx.stroke()
+        }
+      }
       ctx.restore()
     }
   }
