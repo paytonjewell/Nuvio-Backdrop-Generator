@@ -46,10 +46,11 @@ const DEFAULT_SOURCE = {
 
 const DEFAULT_LAYOUT = {
   angle: 12,
-  gap: 20,
+  gap: 12,
   scale: 120,
   radius: 8,
   stagger: 120,
+  autoStagger: true,
   offsetX: 0,
   offsetY: 0,
   imageOpacity: 100,
@@ -215,11 +216,10 @@ export default function App() {
     if (prevImageType.current === source.imageType) return;
     prevImageType.current = source.imageType;
     if (source.imageType === "poster") {
-      setLayout((l) => ({ ...l, stagger: 200, scale: 100, imageOpacity: 50 }));
+      setLayout((l) => ({ ...l, scale: 100, imageOpacity: 50 }));
     } else {
       setLayout((l) => ({
         ...l,
-        stagger: DEFAULT_LAYOUT.stagger,
         scale: DEFAULT_LAYOUT.scale,
         imageOpacity: DEFAULT_LAYOUT.imageOpacity,
       }));
@@ -257,7 +257,7 @@ export default function App() {
   const resetLayout = () =>
     setLayout(
       source.imageType === "poster"
-        ? { ...DEFAULT_LAYOUT, stagger: 200, scale: 100, imageOpacity: 50 }
+        ? { ...DEFAULT_LAYOUT, scale: 100, imageOpacity: 50 }
         : DEFAULT_LAYOUT,
     );
   const resetText = () => setText(DEFAULT_TEXT);

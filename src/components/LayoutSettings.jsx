@@ -42,9 +42,22 @@ export default function LayoutSettings({ layout, onChange, imageType, onImageTyp
               onChange={(v) => set({ radius: v })} />
           </Field>
           <Field>
-            <FieldLabel>Vertical Stagger</FieldLabel>
-            <RangeRow min={0} max={200} value={layout.stagger} displayValue={`${layout.stagger}px`}
-              onChange={(v) => set({ stagger: v })} />
+            <FieldLabel action={
+              <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={layout.autoStagger ?? true}
+                  onChange={e => set({ autoStagger: e.target.checked })}
+                  style={{ accentColor: '#6c63ff', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>Auto</span>
+              </label>
+            }>Vertical Stagger</FieldLabel>
+            {layout.autoStagger ?? true
+              ? <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', padding: '3px 0' }}>Computed from card size</div>
+              : <RangeRow min={0} max={400} value={layout.stagger} displayValue={`${layout.stagger}px`}
+                  onChange={(v) => set({ stagger: v })} />
+            }
           </Field>
           <Field>
             <FieldLabel>Image Opacity</FieldLabel>

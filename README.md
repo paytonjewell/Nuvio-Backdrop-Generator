@@ -19,7 +19,8 @@ Generate streaming-style hero backdrop images from TMDB — download as a PNG re
 
 **Layout**
 
-- Row direction (straight or angled), card scale, gap, corner radius, vertical stagger, image opacity, and X/Y canvas offset
+- Row direction (straight or angled), card scale, gap, corner radius, image opacity, and X/Y canvas offset
+- Vertical stagger defaults to **Auto** mode — computes the exact half-card offset for a brick/masonry layout, and recalculates automatically when scale or gap changes
 - Each section has a ↺ reset button that restores defaults instantly
 
 **Text overlay**
@@ -40,7 +41,8 @@ Generate streaming-style hero backdrop images from TMDB — download as a PNG re
 
 **Persistence**
 
-- Settings saved to `localStorage` and restored on next visit
+- All settings (layout, text, overlay, source filters) saved to `localStorage` and restored on next visit
+- The generated canvas is restored on page refresh — no need to re-generate after an accidental reload
 - Both backdrop and poster paths cached per source so switching image style is instant
 - Individual TMDB ID lookups cached locally for 30 days — titles shared across lists are only fetched once
 

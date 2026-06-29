@@ -27,6 +27,7 @@ export default function CanvasPreview({
           scale: layout.scale / 100,
           radius: layout.radius,
           stagger: layout.stagger,
+        autoStagger: layout.autoStagger,
           angleDeg: layout.angle,
           offsetX: layout.offsetX,
           offsetY: layout.offsetY,

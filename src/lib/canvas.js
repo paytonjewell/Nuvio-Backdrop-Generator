@@ -121,13 +121,14 @@ function drawText(ctx, text, W = CANVAS_W, H = CANVAS_H) {
 }
 
 export function renderCanvas(canvas, images, settings, text = {}) {
-  const { gap, scale, radius, stagger, angleDeg, bgColor, overlayPreset, overlayOpacity, overlayReach = 0.6, offsetX = 0, offsetY = 0, imageType = 'backdrop', imageOpacity = 1, width = CANVAS_W, height = CANVAS_H } = settings
+  const { gap, scale, radius, stagger, autoStagger = true, angleDeg, bgColor, overlayPreset, overlayOpacity, overlayReach = 0.6, offsetX = 0, offsetY = 0, imageType = 'backdrop', imageOpacity = 1, width = CANVAS_W, height = CANVAS_H } = settings
   const W = width, H = height
 
   const cardW = Math.round(320 * scale * (W / 1920))
   const cardH = imageType === 'poster'
     ? Math.round(cardW * 3 / 2)
     : Math.round(cardW * 9 / 16)
+  const effectiveStagger = autoStagger ? Math.round((cardH + gap) / 2) : stagger
   const angleRad = -(angleDeg * Math.PI) / 180
 
   canvas.width = W
@@ -168,7 +169,7 @@ export function renderCanvas(canvas, images, settings, text = {}) {
 
   outer:
   for (const col of colOrder) {
-    const rowOffset = col % 2 === 0 ? 0 : stagger
+    const rowOffset = col % 2 === 0 ? 0 : effectiveStagger
     for (let row = -1; row < numRows; row++) {
       // Check whether this card's center projects onto the canvas vertically.
       // If not, skip the slot without consuming an image so it can be used in
