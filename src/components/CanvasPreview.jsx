@@ -57,7 +57,7 @@ export default function CanvasPreview({
         height: resolution.height,
       };
       settingsRef.current = settings;
-      renderCanvas(canvasRef.current, images, settings, text, excludedPaths);
+      renderCanvas(canvasRef.current, images, settings, text, editMode ? excludedPaths : []);
     };
     render();
   }, [images, layout, overlay, text, resolution, excludedPaths, triggerRender]);

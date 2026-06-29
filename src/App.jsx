@@ -197,8 +197,9 @@ export default function App() {
       try {
         const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
         const src = initialSource.current;
-        const cachedPaths =
-          stored.sourceKey === getSourceKey(src) ? stored[src.imageType] : null;
+        const excluded = new Set(JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"));
+        const rawCached = stored.sourceKey === getSourceKey(src) ? stored[src.imageType] : null;
+        const cachedPaths = rawCached?.filter(p => !excluded.has(p));
         if (cachedPaths?.length > 0) {
           setStatus({ state: "loading", message: "Restoring images…" });
           const loaded = await loadImages(cachedPaths);
@@ -266,10 +267,9 @@ export default function App() {
     const restore = async () => {
       try {
         const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
-        const cachedPaths =
-          stored.sourceKey === getSourceKey(source)
-            ? stored[source.imageType]
-            : null;
+        const excluded = new Set(JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"));
+        const rawCached = stored.sourceKey === getSourceKey(source) ? stored[source.imageType] : null;
+        const cachedPaths = rawCached?.filter(p => !excluded.has(p));
         if (cachedPaths?.length > 0) {
           setStatus({ state: "loading", message: "Restoring images…" });
           const loaded = await loadImages(cachedPaths);
