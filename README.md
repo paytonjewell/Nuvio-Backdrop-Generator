@@ -40,7 +40,7 @@ Generate streaming-style hero backdrop images from TMDB — download as a PNG re
 
 **Persistence**
 
-- Layout, text, and overlay settings saved to `localStorage` and restored on next visit
+- Settings saved to `localStorage` and restored on next visit
 - Both backdrop and poster paths cached per source so switching image style is instant
 - Individual TMDB ID lookups cached locally for 30 days — titles shared across lists are only fetched once
 
