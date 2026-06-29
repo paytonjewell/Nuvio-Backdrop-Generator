@@ -367,12 +367,6 @@ export default function App() {
             <PrimaryButton onClick={generate} disabled={generating}>
               {generating ? "Generating…" : "Generate Backdrop"}
             </PrimaryButton>
-            <SecondaryButton
-              onClick={reshuffleImages}
-              disabled={images.length === 0}
-            >
-              Shuffle Images
-            </SecondaryButton>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span
                 style={{
@@ -413,6 +407,7 @@ export default function App() {
             overlay={overlay}
             text={text}
             resolution={resolution}
+            onShuffle={reshuffleImages}
             triggerRender={renderTick}
           />
         </main>
