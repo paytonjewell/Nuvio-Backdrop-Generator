@@ -4,6 +4,7 @@ import ImageSource from "./components/ImageSource";
 import LayoutSettings from "./components/LayoutSettings";
 import OverlaySettings from "./components/OverlaySettings";
 import TextSettings from "./components/TextSettings";
+import ExcludedModal from "./components/ExcludedModal";
 import CanvasPreview from "./components/CanvasPreview";
 import { StatusBar, PrimaryButton, SecondaryButton } from "./components/UI";
 import {
@@ -121,6 +122,8 @@ export default function App() {
   const [resolution, setResolution] = useState(() =>
     loadStored("nuvio_resolution", { width: 1920, height: 1080 }),
   );
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [excludedModalOpen, setExcludedModalOpen] = useState(false);
   const [excludedPaths, setExcludedPaths] = useState(() => {
     try { return new Set(JSON.parse(localStorage.getItem("nuvio_excluded") || "[]")) }
     catch { return new Set() }
@@ -393,7 +396,7 @@ export default function App() {
     } finally {
       setGenerating(false);
     }
-  }, [tmdbKey, traktKey, source]);
+  }, [tmdbKey, traktKey, source, excludedPaths]);
 
   const reshuffleImages = () => {
     if (rawImages.length === 0) return;
@@ -418,7 +421,37 @@ export default function App() {
         <span className={s.subtitle}>
           — streaming-style hero images for your Nuvio collections.
         </span>
+        <div className={s.headerRight}>
+          <div className={s.settingsWrap}>
+            <button className={s.settingsBtn} onClick={() => setSettingsOpen(o => !o)} title="Settings">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </button>
+            {settingsOpen && (
+              <>
+                <div className={s.settingsBackdrop} onClick={() => setSettingsOpen(false)} />
+                <div className={s.settingsMenu}>
+                  <button className={s.settingsMenuItem} onClick={() => { setExcludedModalOpen(true); setSettingsOpen(false) }}>
+                    Excluded Images
+                    {excludedPaths.size > 0 && <span className={s.menuBadge}>{excludedPaths.size}</span>}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </header>
+
+      {excludedModalOpen && (
+        <ExcludedModal
+          paths={[...excludedPaths]}
+          onToggle={toggleExclusion}
+          onClearAll={() => setExcludedPaths(new Set())}
+          onClose={() => setExcludedModalOpen(false)}
+        />
+      )}
 
       <div className={s.layout}>
         <aside className={s.sidebar}>
