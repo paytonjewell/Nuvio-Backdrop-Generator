@@ -22,10 +22,10 @@ import { fetchMDBLists } from "../lib/tmdb";
 
 const MDBLIST_MODES = [
   { value: "url", label: "URL" },
-  { value: "my-lists", label: "My Lists" },
-  { value: "official", label: "Official" },
-  { value: "top", label: "Top Lists" },
-  { value: "user", label: "User" },
+  { value: "my-lists", label: "My lists" },
+  { value: "official", label: "Official lists" },
+  { value: "top", label: "Top lists" },
+  { value: "user", label: "Search by username" },
 ];
 
 const MDBLIST_ENDPOINTS = {
@@ -53,7 +53,11 @@ function MDBListBrowser({ mdblist, mdblistKey, onChange }) {
     }
     setLoading(true);
     setError("");
-    fetchMDBLists(endpoint, mdblistKey)
+    fetchMDBLists(
+      endpoint,
+      mdblistKey,
+      mdblist.mode === "top" ? { limit: "25" } : {},
+    )
       .then((data) => {
         setLists(data);
         setLoading(false);
@@ -94,10 +98,11 @@ function MDBListBrowser({ mdblist, mdblistKey, onChange }) {
   };
 
   const listLabel = (list) => {
-    const count = list.items != null ? ` (${list.items})` : ""
-    const user = mdblist.mode === "top" && list.user_name ? ` · ${list.user_name}` : ""
-    return `${list.name}${count}${user}`
-  }
+    const count = list.items != null ? ` (${list.items})` : "";
+    const user =
+      mdblist.mode === "top" && list.user_name ? ` · ${list.user_name}` : "";
+    return `${list.name}${count}${user}`;
+  };
 
   if (needsKey && !mdblistKey)
     return (
@@ -159,7 +164,9 @@ function MDBListBrowser({ mdblist, mdblistKey, onChange }) {
           <select
             value={mdblist.listId}
             onChange={(e) => {
-              const found = lists.find((l) => getListPath(l) === e.target.value);
+              const found = lists.find(
+                (l) => getListPath(l) === e.target.value,
+              );
               if (found) selectList(found);
             }}
           >

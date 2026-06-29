@@ -38,8 +38,8 @@ export async function validateMDBListKey(key) {
   return res.ok
 }
 
-export async function fetchMDBLists(endpoint, mdblistKey) {
-  const params = new URLSearchParams()
+export async function fetchMDBLists(endpoint, mdblistKey, extraParams = {}) {
+  const params = new URLSearchParams(extraParams)
   if (mdblistKey) params.set('apikey', mdblistKey)
   const res = await fetch(`https://api.mdblist.com/${endpoint}?${params}`)
   if (!res.ok) throw new Error('MDBList error ' + res.status)
