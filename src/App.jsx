@@ -23,7 +23,11 @@ function getSourceKey(source) {
     const { type, sort, genre, provider } = source.filter;
     return `filter|${type}|${sort}|${genre}|${provider}`;
   }
-  return `trakt|${source.trakt.url}`;
+  if (source.tab === "trakt") {
+    return `trakt|${source.trakt.url}`;
+  }
+  const { mode, url, listId } = source.mdblist;
+  return `mdblist|${mode}|${mode === "url" ? url : listId}`;
 }
 
 const DEFAULT_SOURCE = {
@@ -89,7 +93,16 @@ export default function App() {
   const [mdblistKey, setMdblistKey] = useState(
     () => localStorage.getItem("mdblist_key") || "",
   );
-  const [source, setSource] = useState(DEFAULT_SOURCE);
+  const [source, setSource] = useState(() => {
+    const s = loadStored("nuvio_source", {});
+    return {
+      ...DEFAULT_SOURCE,
+      ...s,
+      filter:  { ...DEFAULT_SOURCE.filter,  ...(s.filter  || {}) },
+      trakt:   { ...DEFAULT_SOURCE.trakt,   ...(s.trakt   || {}) },
+      mdblist: { ...DEFAULT_SOURCE.mdblist, ...(s.mdblist || {}) },
+    };
+  });
   const [layout, setLayout] = useState(() => ({
     ...DEFAULT_LAYOUT,
     ...loadStored("nuvio_layout", {}),
@@ -132,6 +145,15 @@ export default function App() {
     localStorage.setItem("nuvio_resolution", JSON.stringify(resolution));
   }, [resolution]);
 
+  // Persist source to localStorage (debounced)
+  useEffect(() => {
+    const t = setTimeout(
+      () => localStorage.setItem("nuvio_source", JSON.stringify(source)),
+      500,
+    );
+    return () => clearTimeout(t);
+  }, [source]);
+
   // Persist layout/text/overlay to localStorage (debounced)
   useEffect(() => {
     const t = setTimeout(
@@ -154,6 +176,33 @@ export default function App() {
     );
     return () => clearTimeout(t);
   }, [text]);
+
+  // Restore canvas from cache on initial page load
+  const initialSource = useRef(source);
+  useEffect(() => {
+    const restore = async () => {
+      try {
+        const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
+        const src = initialSource.current;
+        const cachedPaths =
+          stored.sourceKey === getSourceKey(src) ? stored[src.imageType] : null;
+        if (cachedPaths?.length > 0) {
+          setStatus({ state: "loading", message: "Restoring images…" });
+          const loaded = await loadImages(cachedPaths);
+          if (loaded.length > 0) {
+            setRawImages(loaded);
+            setImages(loaded);
+            setCanDownload(true);
+            setStatus({
+              state: "success",
+              message: `Done — ${loaded.length} unique backdrops, zero repeats.`,
+            });
+          }
+        }
+      } catch {}
+    };
+    restore();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-render canvas whenever layout/overlay changes (images stay the same)
   useEffect(() => {
