@@ -37,7 +37,7 @@ const DEFAULT_SOURCE = {
     decade: null,
   },
   trakt: { url: "" },
-  mdblist: { url: "" },
+  mdblist: { mode: "url", url: "", listId: "", selectedListName: "", searchUsername: "", mediaType: "" },
 };
 
 const DEFAULT_LAYOUT = {
@@ -246,7 +246,9 @@ export default function App() {
         });
       } else {
         allPaths = await fetchMDBListImages({
-          url: source.mdblist.url,
+          url: source.mdblist.mode === 'url' ? source.mdblist.url : undefined,
+          listId: source.mdblist.mode !== 'url' ? source.mdblist.listId : undefined,
+          mediaType: source.mdblist.mediaType || undefined,
           mdblistKey,
           apiKey: tmdbKey,
         });
@@ -345,6 +347,7 @@ export default function App() {
             source={source}
             onChange={setSource}
             onReset={resetSource}
+            mdblistKey={mdblistKey}
           />
           <LayoutSettings
             layout={layout}

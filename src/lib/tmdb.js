@@ -38,6 +38,15 @@ export async function validateMDBListKey(key) {
   return res.ok
 }
 
+export async function fetchMDBLists(endpoint, mdblistKey) {
+  const params = new URLSearchParams()
+  if (mdblistKey) params.set('apikey', mdblistKey)
+  const res = await fetch(`https://api.mdblist.com/${endpoint}?${params}`)
+  if (!res.ok) throw new Error('MDBList error ' + res.status)
+  const data = await res.json()
+  return Array.isArray(data) ? data : (data.lists || data.data || [])
+}
+
 const ID_CACHE_KEY = 'nuvio_tmdb_ids'
 const ID_CACHE_TTL = 30 * 24 * 60 * 60 * 1000  // 30 days
 const ID_CACHE_MAX = 10_000
@@ -67,15 +76,21 @@ const DISCOVER_SORT_MAP = {
 }
 
 // Always returns both { backdrop: [...], poster: [...] }
-export async function fetchMDBListImages({ url, mdblistKey, apiKey }) {
-  const m = url.match(/mdblist\.com\/lists\/([^/]+)\/([^/?]+)/)
-  if (!m) throw new Error('Invalid MDBList URL — expected https://mdblist.com/lists/username/listname')
-  const [, username, listname] = m
+export async function fetchMDBListImages({ url, listId, mediaType, mdblistKey, apiKey }) {
+  let listPath
+  if (listId) {
+    listPath = String(listId)
+  } else {
+    const m = url?.match(/mdblist\.com\/lists\/(.+?)(?:[/?]|$)/)
+    if (!m) throw new Error('Invalid MDBList URL — expected https://mdblist.com/lists/username/listname')
+    listPath = m[1].replace(/\/$/, '')
+  }
 
   const params = new URLSearchParams({ limit: '1000' })
   if (mdblistKey) params.set('apikey', mdblistKey)
+  if (mediaType) params.set('mediatype', mediaType)
 
-  const res = await fetch(`https://api.mdblist.com/lists/${username}/${listname}/items?${params}`)
+  const res = await fetch(`https://api.mdblist.com/lists/${listPath}/items?${params}`)
   if (!res.ok) throw new Error('MDBList error ' + res.status + (res.status === 401 ? ' — API key required. Add your MDBList key in the API Keys section.' : ' — check your list URL'))
   const data = await res.json()
 
