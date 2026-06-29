@@ -1,9 +1,16 @@
 import React from "react";
-import { SectionLabel, Card, Field, FieldLabel, ToggleRow, TabGroup, Notice, ResetButton } from "./UI";
-import { MOVIE_GENRES, TV_GENRES, MOVIE_SORT_OPTIONS, TV_SORT_OPTIONS, WATCH_PROVIDERS, DECADES } from "../lib/constants";
+import {
+  SectionLabel, Card, Field, FieldLabel, TabGroup, Notice,
+  CollapseButton, Collapsible, useCollapsed,
+} from "./UI";
+import {
+  MOVIE_GENRES, TV_GENRES, MOVIE_SORT_OPTIONS, TV_SORT_OPTIONS,
+  WATCH_PROVIDERS, DECADES,
+} from "../lib/constants";
 
 export default function ImageSource({ source, onChange, onReset }) {
-  const { tab, filter, trakt, imageType } = source;
+  const { tab, filter, trakt, mdblist } = source;
+  const { collapsed, toggle } = useCollapsed('nuvio_collapsed_imagesource');
 
   const genres = filter.type === "movie" ? MOVIE_GENRES : TV_GENRES;
   const allSortOptions = filter.type === "movie" ? MOVIE_SORT_OPTIONS : TV_SORT_OPTIONS;
@@ -16,121 +23,134 @@ export default function ImageSource({ source, onChange, onReset }) {
 
   const setFilter = (patch) => onChange({ ...source, filter: { ...filter, ...patch } });
   const setTrakt = (patch) => onChange({ ...source, trakt: { ...trakt, ...patch } });
+  const setMdblist = (patch) => onChange({ ...source, mdblist: { ...mdblist, ...patch } });
 
   return (
     <div>
-      <SectionLabel action={<ResetButton onClick={onReset} />}>Image Source</SectionLabel>
-      <Card>
-        <Field>
-          <ToggleRow
-            options={[
-              { value: 'backdrop', label: 'Backdrops' },
-              { value: 'poster', label: 'Posters' },
+      <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />}>
+        Image Source
+      </SectionLabel>
+      <Collapsible open={!collapsed}>
+        <Card onReset={onReset}>
+          <TabGroup
+            tabs={[
+              { value: "filter",  label: "TMDB Filter" },
+              { value: "trakt",   label: "Trakt" },
+              { value: "mdblist", label: "MDBList" },
             ]}
-            value={imageType}
-            onChange={(v) => onChange({ ...source, imageType: v })}
+            value={tab}
+            onChange={(t) => onChange({ ...source, tab: t })}
           />
-        </Field>
-        <TabGroup
-          tabs={[
-            { value: "filter", label: "TMDB Filter" },
-            { value: "trakt", label: "Trakt" },
-          ]}
-          value={tab}
-          onChange={(t) => onChange({ ...source, tab: t })}
-        />
 
-        {tab === "filter" && (
-          <>
-            <Field>
-              <FieldLabel>Content Type</FieldLabel>
-              <select
-                value={filter.type}
-                onChange={(e) => setFilter({ type: e.target.value, sort: "popular", genre: "" })}
-              >
-                <option value="movie">Movies</option>
-                <option value="tv">TV Shows</option>
-              </select>
-            </Field>
-            <Field>
-              <FieldLabel>Source</FieldLabel>
-              <select
-                value={filter.sort}
-                onChange={(e) => {
-                  const sort = e.target.value
-                  const timeSensitive = TIME_SENSITIVE_SORTS.includes(sort)
-                  setFilter({
-                    sort,
-                    ...(sort === "trending_week" && { provider: "" }),
-                    ...(timeSensitive && filter.decade && { decade: null }),
-                  })
-                }}
-              >
-                {sortOptions.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </Field>
-            {filter.sort !== "trending_week" && (
+          {tab === "filter" && (
+            <>
               <Field>
-                <FieldLabel>Streaming Service (optional)</FieldLabel>
+                <FieldLabel>Content Type</FieldLabel>
                 <select
-                  value={filter.provider}
-                  onChange={(e) => setFilter({ provider: e.target.value })}
+                  value={filter.type}
+                  onChange={(e) => setFilter({ type: e.target.value, sort: "popular", genre: "" })}
                 >
-                  <option value="">Any</option>
-                  {WATCH_PROVIDERS.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
+                  <option value="movie">Movies</option>
+                  <option value="tv">TV Shows</option>
+                </select>
+              </Field>
+              <Field>
+                <FieldLabel>Source</FieldLabel>
+                <select
+                  value={filter.sort}
+                  onChange={(e) => {
+                    const sort = e.target.value;
+                    const timeSensitive = TIME_SENSITIVE_SORTS.includes(sort);
+                    setFilter({
+                      sort,
+                      ...(sort === "trending_week" && { provider: "" }),
+                      ...(timeSensitive && filter.decade && { decade: null }),
+                    });
+                  }}
+                >
+                  {sortOptions.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                 </select>
               </Field>
-            )}
-            <Field>
-              <FieldLabel>Genre (optional)</FieldLabel>
-              <select
-                value={filter.genre}
-                onChange={(e) => setFilter({ genre: e.target.value })}
-              >
-                <option value="">Any Genre</option>
-                {genres.map((g) => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
-              </select>
-            </Field>
-            {!isTimeSensitive && (
+              {filter.sort !== "trending_week" && (
+                <Field>
+                  <FieldLabel>Streaming Service (optional)</FieldLabel>
+                  <select
+                    value={filter.provider}
+                    onChange={(e) => setFilter({ provider: e.target.value })}
+                  >
+                    <option value="">Any</option>
+                    {WATCH_PROVIDERS.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </Field>
+              )}
               <Field>
-                <FieldLabel>Decade (optional)</FieldLabel>
+                <FieldLabel>Genre (optional)</FieldLabel>
                 <select
-                  value={filter.decade ?? ""}
-                  onChange={(e) => setFilter({ decade: e.target.value ? Number(e.target.value) : null })}
+                  value={filter.genre}
+                  onChange={(e) => setFilter({ genre: e.target.value })}
                 >
-                  <option value="">Any Era</option>
-                  {DECADES.map((d) => (
-                    <option key={d.value} value={d.value}>{d.label}</option>
+                  <option value="">Any Genre</option>
+                  {genres.map((g) => (
+                    <option key={g.id} value={g.id}>{g.name}</option>
                   ))}
                 </select>
               </Field>
-            )}
-          </>
-        )}
+              {!isTimeSensitive && (
+                <Field>
+                  <FieldLabel>Decade (optional)</FieldLabel>
+                  <select
+                    value={filter.decade ?? ""}
+                    onChange={(e) => setFilter({ decade: e.target.value ? Number(e.target.value) : null })}
+                  >
+                    <option value="">Any Era</option>
+                    {DECADES.map((d) => (
+                      <option key={d.value} value={d.value}>{d.label}</option>
+                    ))}
+                  </select>
+                </Field>
+              )}
+            </>
+          )}
 
-        {tab === "trakt" && (
-          <>
-            <Field>
-              <FieldLabel>Trakt List URL</FieldLabel>
-              <input
-                type="text"
-                value={trakt.url}
-                onChange={(e) => setTrakt({ url: e.target.value })}
-                placeholder="https://trakt.tv/users/username/lists/listname"
-              />
-            </Field>
-            <Notice style={{ marginTop: 8 }}>
-              List must be public. Trakt Client ID required above.
-            </Notice>
-          </>
-        )}
-      </Card>
+          {tab === "trakt" && (
+            <>
+              <Field>
+                <FieldLabel>Trakt List URL</FieldLabel>
+                <input
+                  type="text"
+                  value={trakt.url}
+                  onChange={(e) => setTrakt({ url: e.target.value })}
+                  placeholder="https://trakt.tv/users/username/lists/listname"
+                />
+              </Field>
+              <Notice style={{ marginTop: 8 }}>
+                List must be public. Trakt Client ID required above.
+              </Notice>
+            </>
+          )}
+
+          {tab === "mdblist" && (
+            <>
+              <Field>
+                <FieldLabel>MDBList URL</FieldLabel>
+                <input
+                  type="text"
+                  value={mdblist.url}
+                  onChange={(e) => setMdblist({ url: e.target.value })}
+                  placeholder="https://mdblist.com/lists/username/listname"
+                />
+              </Field>
+              <Notice style={{ marginTop: 8 }}>
+                MDBList API key required (even for public lists). Free key available at mdblist.com.
+              </Notice>
+            </>
+          )}
+        </Card>
+      </Collapsible>
     </div>
   );
 }

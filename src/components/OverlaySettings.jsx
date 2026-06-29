@@ -1,5 +1,5 @@
 import React from 'react'
-import { SectionLabel, Card, Field, FieldLabel, RangeRow, ResetButton } from './UI'
+import { SectionLabel, Card, Field, FieldLabel, RangeRow, CollapseButton, Collapsible, useCollapsed } from './UI'
 import s from './OverlaySettings.module.css'
 
 const PRESETS = [
@@ -13,11 +13,13 @@ const PRESETS = [
 
 export default function OverlaySettings({ overlay, onChange, onReset }) {
   const set = (patch) => onChange({ ...overlay, ...patch })
+  const { collapsed, toggle } = useCollapsed('nuvio_collapsed_overlay')
 
   return (
     <div>
-      <SectionLabel action={<ResetButton onClick={onReset} />}>Overlay</SectionLabel>
-      <Card>
+      <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />}>Overlay</SectionLabel>
+      <Collapsible open={!collapsed}>
+      <Card onReset={onReset}>
         <Field>
           <div className={s.presetGrid}>
             {PRESETS.map(p => (
@@ -64,6 +66,7 @@ export default function OverlaySettings({ overlay, onChange, onReset }) {
           </div>
         </Field>
       </Card>
+      </Collapsible>
     </div>
   )
 }

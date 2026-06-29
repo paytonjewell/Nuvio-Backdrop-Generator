@@ -9,27 +9,35 @@ import { StatusBar, PrimaryButton, SecondaryButton } from "./components/UI";
 import {
   fetchFilterImages,
   fetchTraktImages,
+  fetchMDBListImages,
   loadImages,
   shuffle,
 } from "./lib/tmdb";
 import { RESOLUTIONS } from "./lib/constants";
 import s from "./App.module.css";
 
-const CACHE_KEY = 'nuvio_image_cache'
+const CACHE_KEY = "nuvio_image_cache";
 
 function getSourceKey(source) {
-  if (source.tab === 'filter') {
-    const { type, sort, genre, provider } = source.filter
-    return `filter|${type}|${sort}|${genre}|${provider}`
+  if (source.tab === "filter") {
+    const { type, sort, genre, provider } = source.filter;
+    return `filter|${type}|${sort}|${genre}|${provider}`;
   }
-  return `trakt|${source.trakt.url}`
+  return `trakt|${source.trakt.url}`;
 }
 
 const DEFAULT_SOURCE = {
   tab: "filter",
   imageType: "backdrop",
-  filter: { type: "movie", sort: "popular", genre: "", provider: "", decade: null },
+  filter: {
+    type: "movie",
+    sort: "popular",
+    genre: "",
+    provider: "",
+    decade: null,
+  },
   trakt: { url: "" },
+  mdblist: { url: "" },
 };
 
 const DEFAULT_LAYOUT = {
@@ -49,17 +57,17 @@ const DEFAULT_OVERLAY = {
   reach: 0.6,
 };
 const DEFAULT_TEXT = {
-  content: '',
-  font: 'Inter',
+  content: "",
+  font: "Inter",
   size: 100,
-  preset: 'bottom-left',
+  preset: "bottom-left",
   offsetX: 0,
   offsetY: 0,
-  color: '#ffffff',
+  color: "#ffffff",
   shadow: true,
   shadowBlur: 24,
   gradient: false,
-  gradientTo: '#a855f7',
+  gradientTo: "#a855f7",
 };
 
 function loadStored(key, fallback) {
@@ -78,11 +86,25 @@ export default function App() {
   const [traktKey, setTraktKey] = useState(
     () => localStorage.getItem("trakt_key") || "",
   );
+  const [mdblistKey, setMdblistKey] = useState(
+    () => localStorage.getItem("mdblist_key") || "",
+  );
   const [source, setSource] = useState(DEFAULT_SOURCE);
-  const [layout, setLayout] = useState(() => ({ ...DEFAULT_LAYOUT, ...loadStored('nuvio_layout', {}) }));
-  const [overlay, setOverlay] = useState(() => ({ ...DEFAULT_OVERLAY, ...loadStored('nuvio_overlay', {}) }));
-  const [text, setText] = useState(() => ({ ...DEFAULT_TEXT, ...loadStored('nuvio_text', {}) }));
-  const [resolution, setResolution] = useState(() => loadStored('nuvio_resolution', { width: 1920, height: 1080 }));
+  const [layout, setLayout] = useState(() => ({
+    ...DEFAULT_LAYOUT,
+    ...loadStored("nuvio_layout", {}),
+  }));
+  const [overlay, setOverlay] = useState(() => ({
+    ...DEFAULT_OVERLAY,
+    ...loadStored("nuvio_overlay", {}),
+  }));
+  const [text, setText] = useState(() => ({
+    ...DEFAULT_TEXT,
+    ...loadStored("nuvio_text", {}),
+  }));
+  const [resolution, setResolution] = useState(() =>
+    loadStored("nuvio_resolution", { width: 1920, height: 1080 }),
+  );
 
   const [images, setImages] = useState([]); // loaded Image objects, shuffled
   const [rawImages, setRawImages] = useState([]); // unshuffled, for re-shuffling
@@ -101,21 +123,35 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("trakt_key", traktKey);
   }, [traktKey]);
+  useEffect(() => {
+    localStorage.setItem("mdblist_key", mdblistKey);
+  }, [mdblistKey]);
 
   // Persist resolution immediately (infrequent change, no debounce needed)
-  useEffect(() => { localStorage.setItem('nuvio_resolution', JSON.stringify(resolution)); }, [resolution]);
+  useEffect(() => {
+    localStorage.setItem("nuvio_resolution", JSON.stringify(resolution));
+  }, [resolution]);
 
   // Persist layout/text/overlay to localStorage (debounced)
   useEffect(() => {
-    const t = setTimeout(() => localStorage.setItem('nuvio_layout', JSON.stringify(layout)), 500);
+    const t = setTimeout(
+      () => localStorage.setItem("nuvio_layout", JSON.stringify(layout)),
+      500,
+    );
     return () => clearTimeout(t);
   }, [layout]);
   useEffect(() => {
-    const t = setTimeout(() => localStorage.setItem('nuvio_overlay', JSON.stringify(overlay)), 500);
+    const t = setTimeout(
+      () => localStorage.setItem("nuvio_overlay", JSON.stringify(overlay)),
+      500,
+    );
     return () => clearTimeout(t);
   }, [overlay]);
   useEffect(() => {
-    const t = setTimeout(() => localStorage.setItem('nuvio_text', JSON.stringify(text)), 500);
+    const t = setTimeout(
+      () => localStorage.setItem("nuvio_text", JSON.stringify(text)),
+      500,
+    );
     return () => clearTimeout(t);
   }, [text]);
 
@@ -132,37 +168,48 @@ export default function App() {
     if (source.imageType === "poster") {
       setLayout((l) => ({ ...l, stagger: 200, scale: 100, imageOpacity: 50 }));
     } else {
-      setLayout((l) => ({ ...l, stagger: DEFAULT_LAYOUT.stagger, scale: DEFAULT_LAYOUT.scale, imageOpacity: DEFAULT_LAYOUT.imageOpacity }));
+      setLayout((l) => ({
+        ...l,
+        stagger: DEFAULT_LAYOUT.stagger,
+        scale: DEFAULT_LAYOUT.scale,
+        imageOpacity: DEFAULT_LAYOUT.imageOpacity,
+      }));
     }
     const restore = async () => {
       try {
-        const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}')
-        const cachedPaths = stored.sourceKey === getSourceKey(source) ? stored[source.imageType] : null
+        const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
+        const cachedPaths =
+          stored.sourceKey === getSourceKey(source)
+            ? stored[source.imageType]
+            : null;
         if (cachedPaths?.length > 0) {
-          setStatus({ state: 'loading', message: 'Restoring images…' })
-          const loaded = await loadImages(cachedPaths)
+          setStatus({ state: "loading", message: "Restoring images…" });
+          const loaded = await loadImages(cachedPaths);
           if (loaded.length > 0) {
-            setRawImages(loaded)
-            setImages(loaded)
-            setCanDownload(true)
-            setStatus({ state: 'success', message: `Done — ${loaded.length} unique backdrops, zero repeats.` })
-            return
+            setRawImages(loaded);
+            setImages(loaded);
+            setCanDownload(true);
+            setStatus({
+              state: "success",
+              message: `Done — ${loaded.length} unique backdrops, zero repeats.`,
+            });
+            return;
           }
         }
       } catch {}
-      setImages([])
-      setRawImages([])
-      setCanDownload(false)
-      setStatus({ state: '', message: 'Click Generate to create a backdrop.' })
-    }
-    restore()
+      setImages([]);
+      setRawImages([]);
+      setCanDownload(false);
+      setStatus({ state: "", message: "Click Generate to create a backdrop." });
+    };
+    restore();
   }, [source.imageType]);
 
   const resetLayout = () =>
     setLayout(
       source.imageType === "poster"
         ? { ...DEFAULT_LAYOUT, stagger: 200, scale: 100, imageOpacity: 50 }
-        : DEFAULT_LAYOUT
+        : DEFAULT_LAYOUT,
     );
   const resetText = () => setText(DEFAULT_TEXT);
   const resetOverlay = () => setOverlay(DEFAULT_OVERLAY);
@@ -191,10 +238,16 @@ export default function App() {
           decade: source.filter.decade,
           apiKey: tmdbKey,
         });
-      } else {
+      } else if (source.tab === "trakt") {
         allPaths = await fetchTraktImages({
           url: source.trakt.url,
           traktKey,
+          apiKey: tmdbKey,
+        });
+      } else {
+        allPaths = await fetchMDBListImages({
+          url: source.mdblist.url,
+          mdblistKey,
           apiKey: tmdbKey,
         });
       }
@@ -205,10 +258,13 @@ export default function App() {
         poster: shuffle(allPaths.poster),
       };
       try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          sourceKey: getSourceKey(source),
-          ...shuffledPaths,
-        }));
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            sourceKey: getSourceKey(source),
+            ...shuffledPaths,
+          }),
+        );
       } catch {}
 
       const activePaths = shuffledPaths[source.imageType];
@@ -221,7 +277,10 @@ export default function App() {
         return;
       }
 
-      setStatus({ state: "loading", message: `Loading ${activePaths.length} images…` });
+      setStatus({
+        state: "loading",
+        message: `Loading ${activePaths.length} images…`,
+      });
       const loaded = await loadImages(activePaths);
 
       if (loaded.length === 0) {
@@ -268,7 +327,7 @@ export default function App() {
         <div className={s.logoMark}>🎬</div>
         <h1 className={s.title}>Backdrop Generator</h1>
         <span className={s.subtitle}>
-          — streaming-style hero images from TMDB or Trakt
+          — streaming-style hero images for your Nuvio collections.
         </span>
       </header>
 
@@ -277,13 +336,31 @@ export default function App() {
           <ApiKeys
             tmdbKey={tmdbKey}
             traktKey={traktKey}
+            mdblistKey={mdblistKey}
             onTmdbChange={setTmdbKey}
             onTraktChange={setTraktKey}
+            onMdblistChange={setMdblistKey}
           />
-          <ImageSource source={source} onChange={setSource} onReset={resetSource} />
-          <LayoutSettings layout={layout} onChange={setLayout} onReset={resetLayout} />
+          <ImageSource
+            source={source}
+            onChange={setSource}
+            onReset={resetSource}
+          />
+          <LayoutSettings
+            layout={layout}
+            onChange={setLayout}
+            imageType={source.imageType}
+            onImageTypeChange={(v) =>
+              setSource((s) => ({ ...s, imageType: v }))
+            }
+            onReset={resetLayout}
+          />
           <TextSettings text={text} onChange={setText} onReset={resetText} />
-          <OverlaySettings overlay={overlay} onChange={setOverlay} onReset={resetOverlay} />
+          <OverlaySettings
+            overlay={overlay}
+            onChange={setOverlay}
+            onReset={resetOverlay}
+          />
 
           <div className={s.actions}>
             <StatusBar status={status} />
@@ -296,17 +373,29 @@ export default function App() {
             >
               Shuffle Images
             </SecondaryButton>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', flexShrink: 0 }}>Resolution</span>
-              <select
-                value={`${resolution.width}x${resolution.height}`}
-                onChange={e => {
-                  const r = RESOLUTIONS.find(r => `${r.width}x${r.height}` === e.target.value)
-                  if (r) setResolution({ width: r.width, height: r.height })
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                style={{
+                  fontSize: 11,
+                  color: "rgba(255,255,255,0.35)",
+                  flexShrink: 0,
                 }}
               >
-                {RESOLUTIONS.map(r => (
-                  <option key={r.label} value={`${r.width}x${r.height}`}>{r.label}</option>
+                Resolution
+              </span>
+              <select
+                value={`${resolution.width}x${resolution.height}`}
+                onChange={(e) => {
+                  const r = RESOLUTIONS.find(
+                    (r) => `${r.width}x${r.height}` === e.target.value,
+                  );
+                  if (r) setResolution({ width: r.width, height: r.height });
+                }}
+              >
+                {RESOLUTIONS.map((r) => (
+                  <option key={r.label} value={`${r.width}x${r.height}`}>
+                    {r.label}
+                  </option>
                 ))}
               </select>
             </div>

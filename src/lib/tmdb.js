@@ -23,6 +23,21 @@ export async function validateTraktKey(key) {
   return res.ok
 }
 
+async function batchedAllSettled(items, fn, batchSize = 40) {
+  const results = []
+  for (let i = 0; i < items.length; i += batchSize) {
+    const batch = items.slice(i, i + batchSize)
+    const batchResults = await Promise.allSettled(batch.map(fn))
+    results.push(...batchResults)
+  }
+  return results
+}
+
+export async function validateMDBListKey(key) {
+  const res = await fetch(`https://api.mdblist.com/user?apikey=${key}`)
+  return res.ok
+}
+
 const DISCOVER_SORT_MAP = {
   popular:        'popularity.desc',
   top_rated:      'vote_average.desc',
@@ -31,6 +46,40 @@ const DISCOVER_SORT_MAP = {
   on_the_air:     'popularity.desc',
   airing_today:   'popularity.desc',
   trending_week:  'popularity.desc',
+}
+
+// Always returns both { backdrop: [...], poster: [...] }
+export async function fetchMDBListImages({ url, mdblistKey, apiKey }) {
+  const m = url.match(/mdblist\.com\/lists\/([^/]+)\/([^/?]+)/)
+  if (!m) throw new Error('Invalid MDBList URL — expected https://mdblist.com/lists/username/listname')
+  const [, username, listname] = m
+
+  const params = new URLSearchParams({ limit: '1000' })
+  if (mdblistKey) params.set('apikey', mdblistKey)
+
+  const res = await fetch(`https://api.mdblist.com/lists/${username}/${listname}/items?${params}`)
+  if (!res.ok) throw new Error('MDBList error ' + res.status + (res.status === 401 ? ' — API key required. Add your MDBList key in the API Keys section.' : ' — check your list URL'))
+  const data = await res.json()
+
+  const items = [
+    ...(data.movies || []).map(item => ({ tmdbId: item.ids?.tmdb || item.id, tmdbType: 'movie' })),
+    ...(data.shows  || []).map(item => ({ tmdbId: item.ids?.tmdb || item.id, tmdbType: 'tv'    })),
+  ].filter(item => item.tmdbId)
+
+  const results = await batchedAllSettled(
+    items,
+    ({ tmdbId, tmdbType }) =>
+      fetchTMDB(`/${tmdbType}/${tmdbId}`, {}, apiKey).then(d => ({
+        backdrop: d.backdrop_path || null,
+        poster:   d.poster_path   || null,
+      }))
+  )
+
+  const fulfilled = results.filter(r => r.status === 'fulfilled').map(r => r.value)
+  return {
+    backdrop: fulfilled.map(r => r.backdrop).filter(Boolean),
+    poster:   fulfilled.map(r => r.poster).filter(Boolean),
+  }
 }
 
 // Always returns both { backdrop: [...], poster: [...] }
@@ -105,13 +154,13 @@ export async function fetchTraktImages({ url, traktKey, apiKey }) {
     })
     .filter(Boolean)
 
-  const results = await Promise.allSettled(
-    lookups.map(({ tmdbId, tmdbType }) =>
+  const results = await batchedAllSettled(
+    lookups,
+    ({ tmdbId, tmdbType }) =>
       fetchTMDB(`/${tmdbType}/${tmdbId}`, {}, apiKey).then(data => ({
         backdrop: data.backdrop_path || null,
         poster: data.poster_path || null,
       }))
-    )
   )
 
   const fulfilled = results.filter(r => r.status === 'fulfilled').map(r => r.value)
@@ -121,8 +170,8 @@ export async function fetchTraktImages({ url, traktKey, apiKey }) {
   }
 }
 
-export function loadImages(paths) {
-  return Promise.allSettled(
+export async function loadImages(paths) {
+  const results = await Promise.allSettled(
     paths.map(p => new Promise((res, rej) => {
       const img = new Image()
       img.crossOrigin = 'anonymous'
@@ -130,7 +179,8 @@ export function loadImages(paths) {
       img.onerror = rej
       img.src = TMDB_IMAGE_BASE + 'w780' + p
     }))
-  ).then(results => results.filter(r => r.status === 'fulfilled').map(r => r.value))
+  )
+  return results.filter(r => r.status === 'fulfilled').map(r => r.value)
 }
 
 export function shuffle(arr) {

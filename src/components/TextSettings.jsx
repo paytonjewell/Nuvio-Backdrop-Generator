@@ -1,5 +1,5 @@
 import React from 'react'
-import { SectionLabel, Card, Field, FieldLabel, RangeRow, ResetButton } from './UI'
+import { SectionLabel, Card, Field, FieldLabel, RangeRow, CollapseButton, Collapsible, useCollapsed } from './UI'
 import s from './TextSettings.module.css'
 import { TEXT_FONTS } from '../lib/constants'
 
@@ -17,11 +17,13 @@ const POSITIONS = [
 
 export default function TextSettings({ text, onChange, onReset }) {
   const set = (patch) => onChange({ ...text, ...patch })
+  const { collapsed, toggle } = useCollapsed('nuvio_collapsed_text')
 
   return (
     <div>
-      <SectionLabel action={<ResetButton onClick={onReset} />}>Text</SectionLabel>
-      <Card>
+      <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />}>Text</SectionLabel>
+      <Collapsible open={!collapsed}>
+      <Card onReset={onReset}>
         <Field>
           <input
             type="text"
@@ -108,6 +110,7 @@ export default function TextSettings({ text, onChange, onReset }) {
           )}
         </Field>
       </Card>
+      </Collapsible>
     </div>
   )
 }
