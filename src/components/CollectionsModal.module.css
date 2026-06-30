@@ -45,10 +45,18 @@
 }
 
 @keyframes fadeInOut {
-  0%   { opacity: 0; }
-  12%  { opacity: 1; }
-  75%  { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .header {
@@ -96,42 +104,6 @@
   text-overflow: ellipsis;
 }
 
-.headerRight {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.viewToggle {
-  display: flex;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 7px;
-  padding: 2px;
-  gap: 2px;
-}
-
-.viewToggleBtn {
-  background: none;
-  border: none;
-  border-radius: 5px;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 11px;
-  font-weight: 500;
-  padding: 4px 10px;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.viewToggleBtn:hover {
-  color: rgba(255, 255, 255, 0.7);
-}
-.viewToggleBtnActive {
-  background: #a855f7;
-  color: #fff;
-}
-
 .closeBtn {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.4);
@@ -156,9 +128,16 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(108, 99, 255, 0.35) transparent;
 }
-.body::-webkit-scrollbar { width: 6px; }
-.body::-webkit-scrollbar-track { background: transparent; }
-.body::-webkit-scrollbar-thumb { background: rgba(108, 99, 255, 0.35); border-radius: 99px; }
+.body::-webkit-scrollbar {
+  width: 6px;
+}
+.body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.body::-webkit-scrollbar-thumb {
+  background: rgba(108, 99, 255, 0.35);
+  border-radius: 99px;
+}
 
 .hint {
   font-size: 12px;
@@ -257,16 +236,22 @@
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  /* bleed to body edges so cards feel flush */
   margin-inline: -20px;
   padding-inline: 20px;
   padding-bottom: 6px;
   scrollbar-width: thin;
   scrollbar-color: rgba(108, 99, 255, 0.25) transparent;
 }
-.foldersRow::-webkit-scrollbar { height: 4px; }
-.foldersRow::-webkit-scrollbar-track { background: transparent; }
-.foldersRow::-webkit-scrollbar-thumb { background: rgba(108, 99, 255, 0.25); border-radius: 99px; }
+.foldersRow::-webkit-scrollbar {
+  height: 4px;
+}
+.foldersRow::-webkit-scrollbar-track {
+  background: transparent;
+}
+.foldersRow::-webkit-scrollbar-thumb {
+  background: rgba(108, 99, 255, 0.25);
+  border-radius: 99px;
+}
 
 .folderCard {
   flex-shrink: 0;
@@ -323,31 +308,115 @@
 .folderDetailWrap {
   display: flex;
   flex-direction: column;
-  flex: 1;
   overflow: hidden;
 }
 
-.heroPreview {
-  flex: 1;
+/* ── Comparison slider ── */
+
+.compareContainer {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  flex-shrink: 0;
+  position: relative;
   background: #0a0a0f;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   overflow: hidden;
-  min-height: 0;
+  cursor: col-resize;
+  user-select: none;
 }
 
-.heroPreviewImg {
+.compareImg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  pointer-events: none;
 }
 
-.heroPreviewEmpty {
+.compareEmpty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.2);
 }
+
+.compareLabelLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.compareLabel {
+  position: absolute;
+  bottom: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(0, 0, 0, 0.45);
+  padding: 3px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.renderingBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 3px 8px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.sliderHandle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.sliderLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.9);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.sliderGrip {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  color: #13131a;
+  flex-shrink: 0;
+}
+
+/* ── Folder detail footer ── */
 
 .folderDetailMeta {
   flex-shrink: 0;
@@ -400,6 +469,7 @@
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+  flex: 1;
 }
 
 .folderDetailTitle {
@@ -425,10 +495,9 @@
 }
 
 .saveBtn {
-  margin-left: auto;
   flex-shrink: 0;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #6c63ff, #a855f7);
+  background: #a855f7;
   border: none;
   border-radius: 8px;
   color: #fff;
@@ -438,5 +507,28 @@
   transition: opacity 0.15s;
   white-space: nowrap;
 }
-.saveBtn:hover { opacity: 0.88; }
-.saveBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.saveBtn:hover {
+  opacity: 0.88;
+}
+.saveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.06);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  white-space: nowrap;
+  opacity: 0.8;
+}
+.cancelBtn:hover {
+  opacity: 1;
+}
