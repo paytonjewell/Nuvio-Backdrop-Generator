@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { useLocalStorage } from "./hooks";
 import ApiKeys from "./components/ApiKeys";
 import ImageSource from "./components/ImageSource";
@@ -32,7 +38,8 @@ function getSourceKey(source) {
   if (source.tab === "trakt") {
     const { mode, url, listId, mediaType } = source.trakt;
     if (mode === "url") return `trakt|url|${url}`;
-    if (mode === "trending-media" || mode === "popular-media") return `trakt|${mode}|${mediaType}`;
+    if (mode === "trending-media" || mode === "popular-media")
+      return `trakt|${mode}|${mediaType}`;
     return `trakt|user|${listId}`;
   }
   const { mode, url, listId } = source.mdblist;
@@ -165,19 +172,25 @@ export default function App() {
   const [renderTick, setRenderTick] = useState(0); // bump to force re-render
 
   // API keys stored as raw strings (not JSON) — keep direct effects
-  useEffect(() => { localStorage.setItem("tmdb_key", tmdbKey) }, [tmdbKey]);
-  useEffect(() => { localStorage.setItem("trakt_key", traktKey) }, [traktKey]);
-  useEffect(() => { localStorage.setItem("mdblist_key", mdblistKey) }, [mdblistKey]);
+  useEffect(() => {
+    localStorage.setItem("tmdb_key", tmdbKey);
+  }, [tmdbKey]);
+  useEffect(() => {
+    localStorage.setItem("trakt_key", traktKey);
+  }, [traktKey]);
+  useEffect(() => {
+    localStorage.setItem("mdblist_key", mdblistKey);
+  }, [mdblistKey]);
 
   // Stable array from the excluded Set — used for persistence and passed as prop
   const excludedPathsArray = useMemo(() => [...excludedPaths], [excludedPaths]);
 
   // Persist JSON-serialized values via shared hook
-  useLocalStorage("nuvio_excluded",   excludedPathsArray);
-  useLocalStorage("nuvio_source",     source,  500);
-  useLocalStorage("nuvio_layout",     layout,  500);
-  useLocalStorage("nuvio_overlay",    overlay, 500);
-  useLocalStorage("nuvio_text",       text,    500);
+  useLocalStorage("nuvio_excluded", excludedPathsArray);
+  useLocalStorage("nuvio_source", source, 500);
+  useLocalStorage("nuvio_layout", layout, 500);
+  useLocalStorage("nuvio_overlay", overlay, 500);
+  useLocalStorage("nuvio_text", text, 500);
 
   // Restore canvas from cache on initial page load
   const initialSource = useRef(source);
@@ -201,7 +214,7 @@ export default function App() {
             setCanDownload(true);
             setStatus({
               state: "success",
-              message: `Done — ${loaded.length} unique backdrops, zero repeats.`,
+              message: `Done — ${loaded.length} backdrops.`,
             });
           }
         }
@@ -228,7 +241,7 @@ export default function App() {
         setCanDownload(true);
         setStatus({
           state: "success",
-          message: `Done — ${loaded.length} unique backdrops, zero repeats.`,
+          message: `Done — ${loaded.length} backdrops.`,
         });
       }
     } catch {}
@@ -282,7 +295,7 @@ export default function App() {
             setCanDownload(true);
             setStatus({
               state: "success",
-              message: `Done — ${loaded.length} unique backdrops, zero repeats.`,
+              message: `Done — ${loaded.length} backdrops.`,
             });
             return;
           }
@@ -304,7 +317,10 @@ export default function App() {
     setImages([]);
     setRawImages([]);
     setCanDownload(false);
-    setStatus({ state: "", message: "Enter your TMDB API key and pick a source above." });
+    setStatus({
+      state: "",
+      message: "Enter your TMDB API key and pick a source above.",
+    });
     setSettingsOpen(false);
   };
 
@@ -410,7 +426,7 @@ export default function App() {
       setCanDownload(true);
       setStatus({
         state: "success",
-        message: `Done — ${loaded.length} unique backdrops, zero repeats.`,
+        message: `Done — ${loaded.length} backdrops.`,
       });
     } catch (err) {
       setStatus({ state: "error", message: "Error: " + err.message });
@@ -424,7 +440,6 @@ export default function App() {
     setImages(shuffle(rawImages));
     setStatus({ state: "success", message: "Images reshuffled." });
   };
-
 
   return (
     <div className={s.app}>
@@ -544,7 +559,10 @@ export default function App() {
             <PrimaryButton onClick={generate} disabled={generating}>
               {generating ? "Generating…" : "Generate Backdrop"}
             </PrimaryButton>
-            <SecondaryButton onClick={() => setDownloadModalOpen(true)} disabled={!canDownload}>
+            <SecondaryButton
+              onClick={() => setDownloadModalOpen(true)}
+              disabled={!canDownload}
+            >
               Download
             </SecondaryButton>
           </div>
@@ -554,11 +572,12 @@ export default function App() {
           <CanvasPreview
             images={images}
             imageType={source.imageType}
-            onImageTypeChange={(v) => setSource((s) => ({ ...s, imageType: v }))}
+            onImageTypeChange={(v) =>
+              setSource((s) => ({ ...s, imageType: v }))
+            }
             layout={layout}
             overlay={overlay}
             text={text}
-
             excludedPaths={excludedPathsArray}
             onToggleExclusion={toggleExclusion}
             onExitEditMode={regenerateWithExclusions}
