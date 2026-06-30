@@ -5,6 +5,7 @@ import s from "./CanvasPreview.module.css";
 export default function CanvasPreview({
   images,
   imageType,
+  onImageTypeChange,
   layout,
   overlay,
   text,
@@ -68,6 +69,22 @@ export default function CanvasPreview({
         <span className={s.toolbarLabel}>
           Preview · {resolution.width} × {resolution.height}
         </span>
+        {onImageTypeChange && (
+          <div className={s.imageTypeToggle}>
+            <button
+              className={`${s.imageTypeBtn} ${imageType === 'backdrop' ? s.imageTypeBtnActive : ''}`}
+              onClick={() => onImageTypeChange('backdrop')}
+            >
+              Backdrops
+            </button>
+            <button
+              className={`${s.imageTypeBtn} ${imageType === 'poster' ? s.imageTypeBtnActive : ''}`}
+              onClick={() => onImageTypeChange('poster')}
+            >
+              Posters
+            </button>
+          </div>
+        )}
         <div style={{ display: "flex", gap: "0.5rem" }}>
           {hasImages && (
             <button
@@ -99,10 +116,9 @@ export default function CanvasPreview({
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-shuffle-icon lucide-shuffle"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
                 <path d="m18 14 4 4-4 4" />
                 <path d="m18 2 4 4-4 4" />

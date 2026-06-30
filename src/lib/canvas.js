@@ -1,3 +1,5 @@
+import { FONT_WEIGHTS, TEXT_ANCHORS } from './constants'
+
 export const CANVAS_W = 1920
 export const CANVAS_H = 1080
 
@@ -6,10 +8,7 @@ export function getPathFromSrc(src) {
   return m ? m[1] : null
 }
 
-function buildColOrder(diag, cardW, gap) {
-  const numCols = Math.ceil(diag / (cardW + gap)) + 4
-  const visibleCols = numCols - 4
-  const centerCol = Math.min(Math.round((diag - cardW) / (2 * (cardW + gap))), visibleCols - 1)
+function getColOrder(numCols, visibleCols, centerCol) {
   const colOrder = []
   for (let d = 0; d < visibleCols; d++) {
     if (d === 0) { colOrder.push(centerCol); continue }
@@ -17,7 +16,7 @@ function buildColOrder(diag, cardW, gap) {
     if (centerCol - d >= 0) colOrder.push(centerCol - d)
   }
   for (let col = visibleCols; col < numCols; col++) colOrder.push(col)
-  return { colOrder, numCols, numRows: Math.ceil(diag / (Math.ceil(Math.sqrt(2)) + gap)) + 4 }
+  return colOrder
 }
 
 // Returns the index into the images array that was drawn at the given canvas-pixel coordinate,
@@ -43,13 +42,7 @@ export function hitTestCanvas(canvasX, canvasY, images, settings) {
   const gx = dx * cos_a + dy * sin_a + diag / 2
   const gy = -dx * sin_a + dy * cos_a + diag / 2
 
-  const colOrder = []
-  for (let d = 0; d < visibleCols; d++) {
-    if (d === 0) { colOrder.push(centerCol); continue }
-    if (centerCol + d < visibleCols) colOrder.push(centerCol + d)
-    if (centerCol - d >= 0) colOrder.push(centerCol - d)
-  }
-  for (let col = visibleCols; col < numCols; col++) colOrder.push(col)
+  const colOrder = getColOrder(numCols, visibleCols, centerCol)
 
   let imgIdx = 0
   for (const col of colOrder) {
@@ -126,26 +119,6 @@ function applyOverlay(ctx, preset, opacity, reach = 0.6, W = CANVAS_W, H = CANVA
   if (grad) { ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H) }
 }
 
-const FONT_WEIGHTS = {
-  'Inter': 700,
-  'Bebas Neue': 400,
-  'Montserrat': 800,
-  'Oswald': 600,
-  'Playfair Display': 700,
-  'Roboto Condensed': 700,
-}
-
-const TEXT_ANCHORS = {
-  'top-left':      { xFrac: 0,   yFrac: 0,   align: 'left',   baseline: 'top' },
-  'top-center':    { xFrac: 0.5, yFrac: 0,   align: 'center', baseline: 'top' },
-  'top-right':     { xFrac: 1,   yFrac: 0,   align: 'right',  baseline: 'top' },
-  'center-left':   { xFrac: 0,   yFrac: 0.5, align: 'left',   baseline: 'middle' },
-  'center':        { xFrac: 0.5, yFrac: 0.5, align: 'center', baseline: 'middle' },
-  'center-right':  { xFrac: 1,   yFrac: 0.5, align: 'right',  baseline: 'middle' },
-  'bottom-left':   { xFrac: 0,   yFrac: 1,   align: 'left',   baseline: 'bottom' },
-  'bottom-center': { xFrac: 0.5, yFrac: 1,   align: 'center', baseline: 'bottom' },
-  'bottom-right':  { xFrac: 1,   yFrac: 1,   align: 'right',  baseline: 'bottom' },
-}
 
 function drawText(ctx, text, W = CANVAS_W, H = CANVAS_H) {
   const { content, font, size, preset, offsetX, offsetY, color, shadow, shadowBlur, gradient, gradientTo } = text
@@ -222,13 +195,7 @@ export function renderCanvas(canvas, images, settings, text = {}, excludedPaths 
   )
 
   // Fill order: center column first, then alternate outward, buffer cols last
-  const colOrder = []
-  for (let d = 0; d < visibleCols; d++) {
-    if (d === 0) { colOrder.push(centerCol); continue }
-    if (centerCol + d < visibleCols) colOrder.push(centerCol + d)
-    if (centerCol - d >= 0) colOrder.push(centerCol - d)
-  }
-  for (let col = visibleCols; col < numCols; col++) colOrder.push(col)
+  const colOrder = getColOrder(numCols, visibleCols, centerCol)
 
   let imgIdx = 0
   ctx.save()

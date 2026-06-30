@@ -4,15 +4,15 @@ import s from './TextSettings.module.css'
 import { TEXT_FONTS } from '../lib/constants'
 
 const POSITIONS = [
-  { value: 'top-left',      label: '↖' },
-  { value: 'top-center',    label: '↑' },
-  { value: 'top-right',     label: '↗' },
-  { value: 'center-left',   label: '←' },
-  { value: 'center',        label: '·' },
-  { value: 'center-right',  label: '→' },
-  { value: 'bottom-left',   label: '↙' },
-  { value: 'bottom-center', label: '↓' },
-  { value: 'bottom-right',  label: '↘' },
+  { value: 'top-left',      label: '↖', ariaLabel: 'Top left' },
+  { value: 'top-center',    label: '↑', ariaLabel: 'Top center' },
+  { value: 'top-right',     label: '↗', ariaLabel: 'Top right' },
+  { value: 'center-left',   label: '←', ariaLabel: 'Center left' },
+  { value: 'center',        label: '·', ariaLabel: 'Center' },
+  { value: 'center-right',  label: '→', ariaLabel: 'Center right' },
+  { value: 'bottom-left',   label: '↙', ariaLabel: 'Bottom left' },
+  { value: 'bottom-center', label: '↓', ariaLabel: 'Bottom center' },
+  { value: 'bottom-right',  label: '↘', ariaLabel: 'Bottom right' },
 ]
 
 export default function TextSettings({ text, onChange, onReset }) {
@@ -53,6 +53,8 @@ export default function TextSettings({ text, onChange, onReset }) {
                 key={p.value}
                 className={`${s.posBtn} ${text.preset === p.value ? s.active : ''}`}
                 onClick={() => set({ preset: p.value, offsetX: 0, offsetY: 0 })}
+                aria-label={p.ariaLabel}
+                aria-pressed={text.preset === p.value}
               >
                 {p.label}
               </button>

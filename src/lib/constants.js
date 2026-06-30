@@ -1,4 +1,5 @@
 export const TMDB_IMAGE_BASE = 'https://image.tmdb.org/t/p/'
+export const DEFAULT_BG_COLOR = '#0a0a0f'
 
 export const MOVIE_GENRES = [
   { id: 28, name: 'Action' }, { id: 12, name: 'Adventure' }, { id: 16, name: 'Animation' },
@@ -83,6 +84,27 @@ export const DECADES = [
   { value: 2010, label: "10s" },
   { value: 2020, label: "20s" },
 ]
+
+export const FONT_WEIGHTS = {
+  'Inter':            700,
+  'Bebas Neue':       400,
+  'Montserrat':       800,
+  'Oswald':           600,
+  'Playfair Display': 700,
+  'Roboto Condensed': 700,
+}
+
+export const TEXT_ANCHORS = {
+  'top-left':      { xFrac: 0,   yFrac: 0,   align: 'left',   baseline: 'top' },
+  'top-center':    { xFrac: 0.5, yFrac: 0,   align: 'center', baseline: 'top' },
+  'top-right':     { xFrac: 1,   yFrac: 0,   align: 'right',  baseline: 'top' },
+  'center-left':   { xFrac: 0,   yFrac: 0.5, align: 'left',   baseline: 'middle' },
+  'center':        { xFrac: 0.5, yFrac: 0.5, align: 'center', baseline: 'middle' },
+  'center-right':  { xFrac: 1,   yFrac: 0.5, align: 'right',  baseline: 'middle' },
+  'bottom-left':   { xFrac: 0,   yFrac: 1,   align: 'left',   baseline: 'bottom' },
+  'bottom-center': { xFrac: 0.5, yFrac: 1,   align: 'center', baseline: 'bottom' },
+  'bottom-right':  { xFrac: 1,   yFrac: 1,   align: 'right',  baseline: 'bottom' },
+}
 
 export const MOVIE_SORT_OPTIONS = [
   { value: 'popular', label: 'Popular' },

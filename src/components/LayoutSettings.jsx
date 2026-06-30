@@ -1,7 +1,7 @@
 import React from 'react'
 import { SectionLabel, Card, Field, FieldLabel, ToggleRow, RangeRow, CollapseButton, Collapsible, useCollapsed } from './UI'
 
-export default function LayoutSettings({ layout, onChange, imageType, onImageTypeChange, onReset }) {
+export default function LayoutSettings({ layout, onChange, onReset }) {
   const set = (patch) => onChange({ ...layout, ...patch })
   const { collapsed, toggle } = useCollapsed('nuvio_collapsed_layout')
 
@@ -10,14 +10,6 @@ export default function LayoutSettings({ layout, onChange, imageType, onImageTyp
       <SectionLabel action={<CollapseButton collapsed={collapsed} onClick={toggle} />} onClick={toggle}>Layout</SectionLabel>
       <Collapsible open={!collapsed}>
         <Card onReset={onReset}>
-          <Field>
-            <FieldLabel>Image Style</FieldLabel>
-            <ToggleRow
-              options={[{ value: 'backdrop', label: 'Backdrops' }, { value: 'poster', label: 'Posters' }]}
-              value={imageType}
-              onChange={onImageTypeChange}
-            />
-          </Field>
           <Field>
             <FieldLabel>Row Direction</FieldLabel>
             <ToggleRow

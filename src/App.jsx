@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useLocalStorage } from "./hooks";
 import ApiKeys from "./components/ApiKeys";
 import ImageSource from "./components/ImageSource";
 import LayoutSettings from "./components/LayoutSettings";
@@ -6,7 +7,11 @@ import OverlaySettings from "./components/OverlaySettings";
 import TextSettings from "./components/TextSettings";
 import ExcludedModal from "./components/ExcludedModal";
 import CanvasPreview from "./components/CanvasPreview";
-import { StatusBar, PrimaryButton, SecondaryButton } from "./components/UI";
+import {
+  StatusBar,
+  PrimaryButton,
+  SecondaryButton,
+} from "./components/ui/index.js";
 import {
   fetchFilterImages,
   fetchTraktImages,
@@ -14,7 +19,7 @@ import {
   loadImages,
   shuffle,
 } from "./lib/tmdb";
-import { RESOLUTIONS } from "./lib/constants";
+import DownloadModal from "./components/DownloadModal";
 import s from "./App.module.css";
 
 const CACHE_KEY = "nuvio_image_cache";
@@ -44,7 +49,14 @@ const DEFAULT_SOURCE = {
     excludeNC17: false,
   },
   trakt: { url: "" },
-  mdblist: { mode: "url", url: "", listId: "", selectedListName: "", searchUsername: "", mediaType: "" },
+  mdblist: {
+    mode: "url",
+    url: "",
+    listId: "",
+    selectedListName: "",
+    searchUsername: "",
+    mediaType: "",
+  },
 };
 
 const DEFAULT_LAYOUT = {
@@ -102,8 +114,8 @@ export default function App() {
     return {
       ...DEFAULT_SOURCE,
       ...s,
-      filter:  { ...DEFAULT_SOURCE.filter,  ...(s.filter  || {}) },
-      trakt:   { ...DEFAULT_SOURCE.trakt,   ...(s.trakt   || {}) },
+      filter: { ...DEFAULT_SOURCE.filter, ...(s.filter || {}) },
+      trakt: { ...DEFAULT_SOURCE.trakt, ...(s.trakt || {}) },
       mdblist: { ...DEFAULT_SOURCE.mdblist, ...(s.mdblist || {}) },
     };
   });
@@ -119,14 +131,17 @@ export default function App() {
     ...DEFAULT_TEXT,
     ...loadStored("nuvio_text", {}),
   }));
-  const [resolution, setResolution] = useState(() =>
-    loadStored("nuvio_resolution", { width: 1920, height: 1080 }),
-  );
+  const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [excludedModalOpen, setExcludedModalOpen] = useState(false);
   const [excludedPaths, setExcludedPaths] = useState(() => {
-    try { return new Set(JSON.parse(localStorage.getItem("nuvio_excluded") || "[]")) }
-    catch { return new Set() }
+    try {
+      return new Set(
+        JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"),
+      );
+    } catch {
+      return new Set();
+    }
   });
 
   const [images, setImages] = useState([]); // loaded Image objects, shuffled
@@ -139,56 +154,20 @@ export default function App() {
   const [canDownload, setCanDownload] = useState(false);
   const [renderTick, setRenderTick] = useState(0); // bump to force re-render
 
-  // Persist keys
-  useEffect(() => {
-    localStorage.setItem("tmdb_key", tmdbKey);
-  }, [tmdbKey]);
-  useEffect(() => {
-    localStorage.setItem("trakt_key", traktKey);
-  }, [traktKey]);
-  useEffect(() => {
-    localStorage.setItem("mdblist_key", mdblistKey);
-  }, [mdblistKey]);
+  // API keys stored as raw strings (not JSON) — keep direct effects
+  useEffect(() => { localStorage.setItem("tmdb_key", tmdbKey) }, [tmdbKey]);
+  useEffect(() => { localStorage.setItem("trakt_key", traktKey) }, [traktKey]);
+  useEffect(() => { localStorage.setItem("mdblist_key", mdblistKey) }, [mdblistKey]);
 
-  // Persist resolution immediately (infrequent change, no debounce needed)
-  useEffect(() => {
-    localStorage.setItem("nuvio_resolution", JSON.stringify(resolution));
-  }, [resolution]);
-  useEffect(() => {
-    localStorage.setItem("nuvio_excluded", JSON.stringify([...excludedPaths]));
-  }, [excludedPaths]);
+  // Stable array from the excluded Set — used for persistence and passed as prop
+  const excludedPathsArray = useMemo(() => [...excludedPaths], [excludedPaths]);
 
-  // Persist source to localStorage (debounced)
-  useEffect(() => {
-    const t = setTimeout(
-      () => localStorage.setItem("nuvio_source", JSON.stringify(source)),
-      500,
-    );
-    return () => clearTimeout(t);
-  }, [source]);
-
-  // Persist layout/text/overlay to localStorage (debounced)
-  useEffect(() => {
-    const t = setTimeout(
-      () => localStorage.setItem("nuvio_layout", JSON.stringify(layout)),
-      500,
-    );
-    return () => clearTimeout(t);
-  }, [layout]);
-  useEffect(() => {
-    const t = setTimeout(
-      () => localStorage.setItem("nuvio_overlay", JSON.stringify(overlay)),
-      500,
-    );
-    return () => clearTimeout(t);
-  }, [overlay]);
-  useEffect(() => {
-    const t = setTimeout(
-      () => localStorage.setItem("nuvio_text", JSON.stringify(text)),
-      500,
-    );
-    return () => clearTimeout(t);
-  }, [text]);
+  // Persist JSON-serialized values via shared hook
+  useLocalStorage("nuvio_excluded",   excludedPathsArray);
+  useLocalStorage("nuvio_source",     source,  500);
+  useLocalStorage("nuvio_layout",     layout,  500);
+  useLocalStorage("nuvio_overlay",    overlay, 500);
+  useLocalStorage("nuvio_text",       text,    500);
 
   // Restore canvas from cache on initial page load
   const initialSource = useRef(source);
@@ -197,9 +176,12 @@ export default function App() {
       try {
         const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
         const src = initialSource.current;
-        const excluded = new Set(JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"));
-        const rawCached = stored.sourceKey === getSourceKey(src) ? stored[src.imageType] : null;
-        const cachedPaths = rawCached?.filter(p => !excluded.has(p));
+        const excluded = new Set(
+          JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"),
+        );
+        const rawCached =
+          stored.sourceKey === getSourceKey(src) ? stored[src.imageType] : null;
+        const cachedPaths = rawCached?.filter((p) => !excluded.has(p));
         if (cachedPaths?.length > 0) {
           setStatus({ state: "loading", message: "Restoring images…" });
           const loaded = await loadImages(cachedPaths);
@@ -222,7 +204,9 @@ export default function App() {
     try {
       const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
       const cachedPaths =
-        stored.sourceKey === getSourceKey(source) ? stored[source.imageType] : null;
+        stored.sourceKey === getSourceKey(source)
+          ? stored[source.imageType]
+          : null;
       if (!cachedPaths?.length) return;
       const filtered = cachedPaths.filter((p) => !excludedPaths.has(p));
       if (!filtered.length) return;
@@ -232,7 +216,10 @@ export default function App() {
         setRawImages(loaded);
         setImages(loaded);
         setCanDownload(true);
-        setStatus({ state: "success", message: `Done — ${loaded.length} unique backdrops, zero repeats.` });
+        setStatus({
+          state: "success",
+          message: `Done — ${loaded.length} unique backdrops, zero repeats.`,
+        });
       }
     } catch {}
   };
@@ -240,7 +227,8 @@ export default function App() {
   const toggleExclusion = (path) => {
     setExcludedPaths((prev) => {
       const next = new Set(prev);
-      if (next.has(path)) next.delete(path); else next.add(path);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
       return next;
     });
   };
@@ -267,9 +255,14 @@ export default function App() {
     const restore = async () => {
       try {
         const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
-        const excluded = new Set(JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"));
-        const rawCached = stored.sourceKey === getSourceKey(source) ? stored[source.imageType] : null;
-        const cachedPaths = rawCached?.filter(p => !excluded.has(p));
+        const excluded = new Set(
+          JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"),
+        );
+        const rawCached =
+          stored.sourceKey === getSourceKey(source)
+            ? stored[source.imageType]
+            : null;
+        const cachedPaths = rawCached?.filter((p) => !excluded.has(p));
         if (cachedPaths?.length > 0) {
           setStatus({ state: "loading", message: "Restoring images…" });
           const loaded = await loadImages(cachedPaths);
@@ -292,6 +285,18 @@ export default function App() {
     };
     restore();
   }, [source.imageType]);
+
+  const resetAll = () => {
+    setSource(DEFAULT_SOURCE);
+    setLayout(DEFAULT_LAYOUT);
+    setOverlay(DEFAULT_OVERLAY);
+    setText(DEFAULT_TEXT);
+    setImages([]);
+    setRawImages([]);
+    setCanDownload(false);
+    setStatus({ state: "", message: "Enter your TMDB API key and pick a source above." });
+    setSettingsOpen(false);
+  };
 
   const resetLayout = () =>
     setLayout(
@@ -336,8 +341,9 @@ export default function App() {
         });
       } else {
         allPaths = await fetchMDBListImages({
-          url: source.mdblist.mode === 'url' ? source.mdblist.url : undefined,
-          listId: source.mdblist.mode !== 'url' ? source.mdblist.listId : undefined,
+          url: source.mdblist.mode === "url" ? source.mdblist.url : undefined,
+          listId:
+            source.mdblist.mode !== "url" ? source.mdblist.listId : undefined,
           mediaType: source.mdblist.mediaType || undefined,
           mdblistKey,
           apiKey: tmdbKey,
@@ -359,7 +365,9 @@ export default function App() {
         );
       } catch {}
 
-      const activePaths = shuffledPaths[source.imageType].filter(p => !excludedPaths.has(p));
+      const activePaths = shuffledPaths[source.imageType].filter(
+        (p) => !excludedPaths.has(p),
+      );
       if (activePaths.length === 0) {
         setStatus({
           state: "error",
@@ -396,7 +404,7 @@ export default function App() {
     } finally {
       setGenerating(false);
     }
-  }, [tmdbKey, traktKey, source, excludedPaths]);
+  }, [tmdbKey, traktKey, mdblistKey, source, excludedPaths]);
 
   const reshuffleImages = () => {
     if (rawImages.length === 0) return;
@@ -404,14 +412,6 @@ export default function App() {
     setStatus({ state: "success", message: "Images reshuffled." });
   };
 
-  const downloadImage = () => {
-    const canvas = document.querySelector("canvas");
-    if (!canvas) return;
-    const a = document.createElement("a");
-    a.download = `backdrop-${Date.now()}.png`;
-    a.href = canvas.toDataURL("image/png");
-    a.click();
-  };
 
   return (
     <div className={s.app}>
@@ -423,19 +423,49 @@ export default function App() {
         </span>
         <div className={s.headerRight}>
           <div className={s.settingsWrap}>
-            <button className={s.settingsBtn} onClick={() => setSettingsOpen(o => !o)} title="Settings">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
-                <circle cx="12" cy="12" r="3"/>
+            <button
+              className={s.settingsBtn}
+              onClick={() => setSettingsOpen((o) => !o)}
+              title="Settings"
+              aria-label="Settings"
+              aria-expanded={settingsOpen}
+              aria-haspopup="menu"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                <circle cx="12" cy="12" r="3" />
               </svg>
             </button>
             {settingsOpen && (
               <>
-                <div className={s.settingsBackdrop} onClick={() => setSettingsOpen(false)} />
+                <div
+                  className={s.settingsBackdrop}
+                  onClick={() => setSettingsOpen(false)}
+                />
                 <div className={s.settingsMenu}>
-                  <button className={s.settingsMenuItem} onClick={() => { setExcludedModalOpen(true); setSettingsOpen(false) }}>
+                  <button
+                    className={s.settingsMenuItem}
+                    onClick={() => {
+                      setExcludedModalOpen(true);
+                      setSettingsOpen(false);
+                    }}
+                  >
                     Excluded Images
-                    {excludedPaths.size > 0 && <span className={s.menuBadge}>{excludedPaths.size}</span>}
+                    {excludedPaths.size > 0 && (
+                      <span className={s.menuBadge}>{excludedPaths.size}</span>
+                    )}
+                  </button>
+                  <button className={s.settingsMenuItem} onClick={resetAll}>
+                    Reset all to defaults
                   </button>
                 </div>
               </>
@@ -453,71 +483,55 @@ export default function App() {
         />
       )}
 
+      {downloadModalOpen && (
+        <DownloadModal
+          images={images}
+          imageType={source.imageType}
+          layout={layout}
+          overlay={overlay}
+          text={text}
+          excludedPaths={excludedPathsArray}
+          onClose={() => setDownloadModalOpen(false)}
+        />
+      )}
+
       <div className={s.layout}>
         <aside className={s.sidebar}>
-          <ApiKeys
-            tmdbKey={tmdbKey}
-            traktKey={traktKey}
-            mdblistKey={mdblistKey}
-            onTmdbChange={setTmdbKey}
-            onTraktChange={setTraktKey}
-            onMdblistChange={setMdblistKey}
-          />
-          <ImageSource
-            source={source}
-            onChange={setSource}
-            onReset={resetSource}
-            mdblistKey={mdblistKey}
-          />
-          <LayoutSettings
-            layout={layout}
-            onChange={setLayout}
-            imageType={source.imageType}
-            onImageTypeChange={(v) =>
-              setSource((s) => ({ ...s, imageType: v }))
-            }
-            onReset={resetLayout}
-          />
-          <TextSettings text={text} onChange={setText} onReset={resetText} />
-          <OverlaySettings
-            overlay={overlay}
-            onChange={setOverlay}
-            onReset={resetOverlay}
-          />
+          <div className={s.sidebarScroll}>
+            <ApiKeys
+              tmdbKey={tmdbKey}
+              traktKey={traktKey}
+              mdblistKey={mdblistKey}
+              onTmdbChange={setTmdbKey}
+              onTraktChange={setTraktKey}
+              onMdblistChange={setMdblistKey}
+            />
+            <ImageSource
+              source={source}
+              onChange={setSource}
+              onReset={resetSource}
+              mdblistKey={mdblistKey}
+            />
+            <LayoutSettings
+              layout={layout}
+              onChange={setLayout}
+              onReset={resetLayout}
+            />
+            <TextSettings text={text} onChange={setText} onReset={resetText} />
+            <OverlaySettings
+              overlay={overlay}
+              onChange={setOverlay}
+              onReset={resetOverlay}
+            />
+          </div>
 
           <div className={s.actions}>
             <StatusBar status={status} />
             <PrimaryButton onClick={generate} disabled={generating}>
               {generating ? "Generating…" : "Generate Backdrop"}
             </PrimaryButton>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span
-                style={{
-                  fontSize: 11,
-                  color: "rgba(255,255,255,0.35)",
-                  flexShrink: 0,
-                }}
-              >
-                Resolution
-              </span>
-              <select
-                value={`${resolution.width}x${resolution.height}`}
-                onChange={(e) => {
-                  const r = RESOLUTIONS.find(
-                    (r) => `${r.width}x${r.height}` === e.target.value,
-                  );
-                  if (r) setResolution({ width: r.width, height: r.height });
-                }}
-              >
-                {RESOLUTIONS.map((r) => (
-                  <option key={r.label} value={`${r.width}x${r.height}`}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <SecondaryButton onClick={downloadImage} disabled={!canDownload}>
-              Download PNG
+            <SecondaryButton onClick={() => setDownloadModalOpen(true)} disabled={!canDownload}>
+              Download
             </SecondaryButton>
           </div>
         </aside>
@@ -526,11 +540,12 @@ export default function App() {
           <CanvasPreview
             images={images}
             imageType={source.imageType}
+            onImageTypeChange={(v) => setSource((s) => ({ ...s, imageType: v }))}
             layout={layout}
             overlay={overlay}
             text={text}
-            resolution={resolution}
-            excludedPaths={[...excludedPaths]}
+
+            excludedPaths={excludedPathsArray}
             onToggleExclusion={toggleExclusion}
             onExitEditMode={regenerateWithExclusions}
             onShuffle={reshuffleImages}

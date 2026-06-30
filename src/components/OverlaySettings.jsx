@@ -1,14 +1,15 @@
 import React from 'react'
 import { SectionLabel, Card, Field, FieldLabel, RangeRow, CollapseButton, Collapsible, useCollapsed } from './UI'
 import s from './OverlaySettings.module.css'
+import { DEFAULT_BG_COLOR } from '../lib/constants'
 
 const PRESETS = [
-  { value: 'dark-left', label: '◀ Dark Left' },
-  { value: 'dark-right', label: 'Dark Right ▶' },
-  { value: 'vignette', label: '⬜ Vignette' },
-  { value: 'cinematic', label: '🎬 Cinematic' },
-  { value: 'bottom', label: '▼ Bottom Fade' },
-  { value: 'none', label: '✕ None' },
+  { value: 'dark-left',  label: '◀ Dark Left',   ariaLabel: 'Dark Left' },
+  { value: 'dark-right', label: 'Dark Right ▶',   ariaLabel: 'Dark Right' },
+  { value: 'vignette',   label: '⬜ Vignette',    ariaLabel: 'Vignette' },
+  { value: 'cinematic',  label: '🎬 Cinematic',   ariaLabel: 'Cinematic' },
+  { value: 'bottom',     label: '▼ Bottom Fade',  ariaLabel: 'Bottom Fade' },
+  { value: 'none',       label: '✕ None',         ariaLabel: 'None' },
 ]
 
 export default function OverlaySettings({ overlay, onChange, onReset }) {
@@ -27,6 +28,8 @@ export default function OverlaySettings({ overlay, onChange, onReset }) {
                 key={p.value}
                 className={`${s.presetBtn} ${overlay.preset === p.value ? s.active : ''}`}
                 onClick={() => set({ preset: p.value })}
+                aria-label={p.ariaLabel}
+                aria-pressed={overlay.preset === p.value}
               >
                 {p.label}
               </button>
@@ -54,7 +57,7 @@ export default function OverlaySettings({ overlay, onChange, onReset }) {
               <input
                 type="checkbox"
                 checked={overlay.bgColor === 'transparent'}
-                onChange={e => set({ bgColor: e.target.checked ? 'transparent' : '#0a0a0f' })}
+                onChange={e => set({ bgColor: e.target.checked ? 'transparent' : DEFAULT_BG_COLOR })}
                 style={{ accentColor: '#6c63ff', cursor: 'pointer' }}
               />
               <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 500 }}>Transparent</span>
