@@ -2,7 +2,8 @@
 
 Generate streaming-style hero backdrop images from TMDB — download as a PNG ready for Nuvio collections, or wherever you need a cinematic background.
 
-<img width="1200" alt="CleanShot 2026-06-25 at 15 38 19" src="https://github.com/user-attachments/assets/db200508-bd54-4fed-95ef-f39487b7e395" />
+<img width="1200" alt="CleanShot 2026-06-29 at 23 40 41@2x" src="https://github.com/user-attachments/assets/27bc8368-0e14-4da4-a86d-7968e1cd5905" />
+
 
 ## Features
 
