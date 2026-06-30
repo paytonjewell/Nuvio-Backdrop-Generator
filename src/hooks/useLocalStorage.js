@@ -1,10 +1,14 @@
 import { useEffect } from 'react'
 
-/**
- * Persists `value` to localStorage under `key` whenever it changes.
- * Pass `debounceMs > 0` for high-frequency values like sliders.
- * Serializes with JSON.stringify — pass pre-serialized primitives separately.
- */
+export function loadStored(key, fallback) {
+  try {
+    const v = localStorage.getItem(key)
+    return v ? JSON.parse(v) : fallback
+  } catch {
+    return fallback
+  }
+}
+
 export function useLocalStorage(key, value, debounceMs = 0) {
   useEffect(() => {
     const save = () => {

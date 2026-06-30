@@ -8,7 +8,7 @@ Generate streaming-style hero backdrop images from TMDB — download as a PNG re
 
 **Image sources**
 
-- **TMDB Filter** — pull from Popular, Top Rated, Trending This Week, Now Playing, or On The Air, filtered by genre (including Anime), streaming service, or decade
+- **TMDB Filter** — pull from Popular, Top Rated, Trending This Week, Now Playing, or On The Air, filtered by genre, streaming service, or decade
 - **Trakt** — browse trending or popular movies and shows directly, search any user's public lists by username, or paste a direct list URL; movies and shows are detected automatically, mixed lists supported
 - **MDBList** — browse your own lists, official MDBList curated collections, the top 25 public lists, or search any user's lists by username; also accepts a direct URL
 

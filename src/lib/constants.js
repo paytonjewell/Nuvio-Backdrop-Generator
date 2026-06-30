@@ -48,11 +48,15 @@ export const RESOLUTIONS = [
 ];
 
 export const TEXT_FONTS = [
-  { value: "Inter", weight: 700 },
+  { value: "Anton", weight: 400 },
   { value: "Bebas Neue", weight: 400 },
+  { value: "Cinzel", weight: 700 },
+  { value: "DM Serif Display", weight: 400 },
+  { value: "Inter", weight: 700 },
   { value: "Montserrat", weight: 800 },
   { value: "Oswald", weight: 600 },
   { value: "Playfair Display", weight: 700 },
+  { value: "Raleway", weight: 700 },
   { value: "Roboto Condensed", weight: 700 },
 ];
 

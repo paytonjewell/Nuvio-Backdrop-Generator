@@ -1,11 +1,5 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-  useMemo,
-} from "react";
-import { useLocalStorage } from "./hooks";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useLocalStorage, useImageSession, loadStored } from "./hooks";
 import ApiKeys from "./components/ApiKeys";
 import ImageSource from "./components/ImageSource";
 import LayoutSettings from "./components/LayoutSettings";
@@ -18,103 +12,14 @@ import {
   PrimaryButton,
   SecondaryButton,
 } from "./components/ui/index.js";
-import {
-  fetchFilterImages,
-  fetchTraktImages,
-  fetchMDBListImages,
-  loadImages,
-  shuffle,
-} from "./lib/tmdb";
 import DownloadModal from "./components/DownloadModal";
+import {
+  DEFAULT_SOURCE,
+  DEFAULT_LAYOUT,
+  DEFAULT_OVERLAY,
+  DEFAULT_TEXT,
+} from "./lib/defaults";
 import s from "./App.module.css";
-
-const CACHE_KEY = "nuvio_image_cache";
-
-function getSourceKey(source) {
-  if (source.tab === "filter") {
-    const { type, sort, genre, provider } = source.filter;
-    return `filter|${type}|${sort}|${genre}|${provider}`;
-  }
-  if (source.tab === "trakt") {
-    const { mode, url, listId, mediaType } = source.trakt;
-    if (mode === "url") return `trakt|url|${url}`;
-    if (mode === "trending-media" || mode === "popular-media")
-      return `trakt|${mode}|${mediaType}`;
-    return `trakt|user|${listId}`;
-  }
-  const { mode, url, listId } = source.mdblist;
-  return `mdblist|${mode}|${mode === "url" ? url : listId}`;
-}
-
-const DEFAULT_SOURCE = {
-  tab: "filter",
-  imageType: "backdrop",
-  filter: {
-    type: "movie",
-    sort: "popular",
-    genre: "",
-    provider: "",
-    decade: null,
-    language: "",
-    excludeNC17: false,
-  },
-  trakt: {
-    mode: "url",
-    url: "",
-    username: "",
-    listId: "",
-    selectedListName: "",
-    mediaType: "movies",
-  },
-  mdblist: {
-    mode: "url",
-    url: "",
-    listId: "",
-    selectedListName: "",
-    searchUsername: "",
-    mediaType: "",
-  },
-};
-
-const DEFAULT_LAYOUT = {
-  angle: 12,
-  gap: 12,
-  scale: 120,
-  radius: 8,
-  stagger: 120,
-  autoStagger: true,
-  offsetX: 0,
-  offsetY: 0,
-  imageOpacity: 100,
-};
-const DEFAULT_OVERLAY = {
-  preset: "cinematic",
-  opacity: 0.85,
-  bgColor: "transparent",
-  reach: 0.6,
-};
-const DEFAULT_TEXT = {
-  content: "",
-  font: "Inter",
-  size: 100,
-  preset: "bottom-left",
-  offsetX: 0,
-  offsetY: 0,
-  color: "#ffffff",
-  shadow: true,
-  shadowBlur: 24,
-  gradient: false,
-  gradientTo: "#a855f7",
-};
-
-function loadStored(key, fallback) {
-  try {
-    const v = localStorage.getItem(key);
-    return v ? JSON.parse(v) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 export default function App() {
   const [tmdbKey, setTmdbKey] = useState(
@@ -127,13 +32,13 @@ export default function App() {
     () => localStorage.getItem("mdblist_key") || "",
   );
   const [source, setSource] = useState(() => {
-    const s = loadStored("nuvio_source", {});
+    const stored = loadStored("nuvio_source", {});
     return {
       ...DEFAULT_SOURCE,
-      ...s,
-      filter: { ...DEFAULT_SOURCE.filter, ...(s.filter || {}) },
-      trakt: { ...DEFAULT_SOURCE.trakt, ...(s.trakt || {}) },
-      mdblist: { ...DEFAULT_SOURCE.mdblist, ...(s.mdblist || {}) },
+      ...stored,
+      filter: { ...DEFAULT_SOURCE.filter, ...(stored.filter || {}) },
+      trakt: { ...DEFAULT_SOURCE.trakt, ...(stored.trakt || {}) },
+      mdblist: { ...DEFAULT_SOURCE.mdblist, ...(stored.mdblist || {}) },
     };
   });
   const [layout, setLayout] = useState(() => ({
@@ -153,115 +58,37 @@ export default function App() {
   const [excludedModalOpen, setExcludedModalOpen] = useState(false);
   const [excludedPaths, setExcludedPaths] = useState(() => {
     try {
-      return new Set(
-        JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"),
-      );
+      return new Set(JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"));
     } catch {
       return new Set();
     }
   });
+  const [renderTick, setRenderTick] = useState(0);
 
-  const [images, setImages] = useState([]); // loaded Image objects, shuffled
-  const [rawImages, setRawImages] = useState([]); // unshuffled, for re-shuffling
-  const [status, setStatus] = useState({
-    state: "",
-    message: "Enter your TMDB API key and pick a source above.",
-  });
-  const [generating, setGenerating] = useState(false);
-  const [canDownload, setCanDownload] = useState(false);
-  const [renderTick, setRenderTick] = useState(0); // bump to force re-render
+  // API keys stored as raw strings — keep direct effects
+  useEffect(() => { localStorage.setItem("tmdb_key", tmdbKey); }, [tmdbKey]);
+  useEffect(() => { localStorage.setItem("trakt_key", traktKey); }, [traktKey]);
+  useEffect(() => { localStorage.setItem("mdblist_key", mdblistKey); }, [mdblistKey]);
 
-  // API keys stored as raw strings (not JSON) — keep direct effects
-  useEffect(() => {
-    localStorage.setItem("tmdb_key", tmdbKey);
-  }, [tmdbKey]);
-  useEffect(() => {
-    localStorage.setItem("trakt_key", traktKey);
-  }, [traktKey]);
-  useEffect(() => {
-    localStorage.setItem("mdblist_key", mdblistKey);
-  }, [mdblistKey]);
-
-  // Stable array from the excluded Set — used for persistence and passed as prop
   const excludedPathsArray = useMemo(() => [...excludedPaths], [excludedPaths]);
-
-  // Persist JSON-serialized values via shared hook
   useLocalStorage("nuvio_excluded", excludedPathsArray);
   useLocalStorage("nuvio_source", source, 500);
   useLocalStorage("nuvio_layout", layout, 500);
   useLocalStorage("nuvio_overlay", overlay, 500);
   useLocalStorage("nuvio_text", text, 500);
 
-  // Restore canvas from cache on initial page load
-  const initialSource = useRef(source);
-  useEffect(() => {
-    const restore = async () => {
-      try {
-        const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
-        const src = initialSource.current;
-        const excluded = new Set(
-          JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"),
-        );
-        const rawCached =
-          stored.sourceKey === getSourceKey(src) ? stored[src.imageType] : null;
-        const cachedPaths = rawCached?.filter((p) => !excluded.has(p));
-        if (cachedPaths?.length > 0) {
-          setStatus({ state: "loading", message: "Restoring images…" });
-          const loaded = await loadImages(cachedPaths);
-          if (loaded.length > 0) {
-            setRawImages(loaded);
-            setImages(loaded);
-            setCanDownload(true);
-            setStatus({
-              state: "success",
-              message: `Done — ${loaded.length} backdrops.`,
-            });
-          }
-        }
-      } catch {}
-    };
-    restore();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const {
+    images,
+    status,
+    generating,
+    canDownload,
+    generate,
+    reshuffleImages,
+    regenerateWithExclusions,
+    reset: resetSession,
+  } = useImageSession({ tmdbKey, traktKey, mdblistKey, source, excludedPaths });
 
-  const regenerateWithExclusions = async () => {
-    try {
-      const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
-      const cachedPaths =
-        stored.sourceKey === getSourceKey(source)
-          ? stored[source.imageType]
-          : null;
-      if (!cachedPaths?.length) return;
-      const filtered = cachedPaths.filter((p) => !excludedPaths.has(p));
-      if (!filtered.length) return;
-      setStatus({ state: "loading", message: "Updating backdrop…" });
-      const loaded = await loadImages(filtered);
-      if (loaded.length > 0) {
-        setRawImages(loaded);
-        setImages(loaded);
-        setCanDownload(true);
-        setStatus({
-          state: "success",
-          message: `Done — ${loaded.length} backdrops.`,
-        });
-      }
-    } catch {}
-  };
-
-  const toggleExclusion = (path) => {
-    setExcludedPaths((prev) => {
-      const next = new Set(prev);
-      if (next.has(path)) next.delete(path);
-      else next.add(path);
-      return next;
-    });
-  };
-
-  // Re-render canvas whenever layout/overlay/exclusions change (images stay the same)
-  useEffect(() => {
-    if (images.length > 0) setRenderTick((t) => t + 1);
-  }, [layout, overlay, text, excludedPaths]);
-
-  // Apply mode defaults and restore cached images when switching between backdrops/posters
+  // Adjust layout defaults when switching between backdrops and posters
   const prevImageType = useRef(source.imageType);
   useEffect(() => {
     if (prevImageType.current === source.imageType) return;
@@ -275,55 +102,23 @@ export default function App() {
         imageOpacity: DEFAULT_LAYOUT.imageOpacity,
       }));
     }
-    const restore = async () => {
-      try {
-        const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
-        const excluded = new Set(
-          JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"),
-        );
-        const rawCached =
-          stored.sourceKey === getSourceKey(source)
-            ? stored[source.imageType]
-            : null;
-        const cachedPaths = rawCached?.filter((p) => !excluded.has(p));
-        if (cachedPaths?.length > 0) {
-          setStatus({ state: "loading", message: "Restoring images…" });
-          const loaded = await loadImages(cachedPaths);
-          if (loaded.length > 0) {
-            setRawImages(loaded);
-            setImages(loaded);
-            setCanDownload(true);
-            setStatus({
-              state: "success",
-              message: `Done — ${loaded.length} backdrops.`,
-            });
-            return;
-          }
-        }
-      } catch {}
-      setImages([]);
-      setRawImages([]);
-      setCanDownload(false);
-      setStatus({ state: "", message: "Click Generate to create a backdrop." });
-    };
-    restore();
   }, [source.imageType]);
 
-  const resetAll = () => {
-    setSource(DEFAULT_SOURCE);
-    setLayout(DEFAULT_LAYOUT);
-    setOverlay(DEFAULT_OVERLAY);
-    setText(DEFAULT_TEXT);
-    setImages([]);
-    setRawImages([]);
-    setCanDownload(false);
-    setStatus({
-      state: "",
-      message: "Enter your TMDB API key and pick a source above.",
+  // Re-render canvas when layout, overlay, text, or exclusions change
+  useEffect(() => {
+    if (images.length > 0) setRenderTick((t) => t + 1);
+  }, [layout, overlay, text, excludedPaths]);
+
+  const toggleExclusion = (path) => {
+    setExcludedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
     });
-    setSettingsOpen(false);
   };
 
+  const resetSource = () => setSource(DEFAULT_SOURCE);
   const resetLayout = () =>
     setLayout(
       source.imageType === "poster"
@@ -332,113 +127,13 @@ export default function App() {
     );
   const resetText = () => setText(DEFAULT_TEXT);
   const resetOverlay = () => setOverlay(DEFAULT_OVERLAY);
-  const resetSource = () => setSource(DEFAULT_SOURCE);
-
-  const generate = useCallback(async () => {
-    if (!tmdbKey) {
-      setStatus({
-        state: "error",
-        message: "Please enter your TMDB API key first.",
-      });
-      return;
-    }
-    setGenerating(true);
-    setCanDownload(false);
-    setStatus({ state: "loading", message: "Fetching image list…" });
-
-    try {
-      let allPaths;
-      if (source.tab === "filter") {
-        allPaths = await fetchFilterImages({
-          type: source.filter.type,
-          sort: source.filter.sort,
-          genre: source.filter.genre,
-          provider: source.filter.provider,
-          decade: source.filter.decade,
-          language: source.filter.language,
-          excludeNC17: source.filter.excludeNC17,
-          apiKey: tmdbKey,
-        });
-      } else if (source.tab === "trakt") {
-        allPaths = await fetchTraktImages({
-          mode: source.trakt.mode,
-          url: source.trakt.url,
-          listId: source.trakt.listId,
-          mediaType: source.trakt.mediaType,
-          traktKey,
-          apiKey: tmdbKey,
-        });
-      } else {
-        allPaths = await fetchMDBListImages({
-          url: source.mdblist.mode === "url" ? source.mdblist.url : undefined,
-          listId:
-            source.mdblist.mode !== "url" ? source.mdblist.listId : undefined,
-          mediaType: source.mdblist.mediaType || undefined,
-          mdblistKey,
-          apiKey: tmdbKey,
-        });
-      }
-
-      // Shuffle each set once and cache both
-      const shuffledPaths = {
-        backdrop: shuffle(allPaths.backdrop),
-        poster: shuffle(allPaths.poster),
-      };
-      try {
-        localStorage.setItem(
-          CACHE_KEY,
-          JSON.stringify({
-            sourceKey: getSourceKey(source),
-            ...shuffledPaths,
-          }),
-        );
-      } catch {}
-
-      const activePaths = shuffledPaths[source.imageType].filter(
-        (p) => !excludedPaths.has(p),
-      );
-      if (activePaths.length === 0) {
-        setStatus({
-          state: "error",
-          message: "No images found — try a different filter.",
-        });
-        setGenerating(false);
-        return;
-      }
-
-      setStatus({
-        state: "loading",
-        message: `Loading ${activePaths.length} images…`,
-      });
-      const loaded = await loadImages(activePaths);
-
-      if (loaded.length === 0) {
-        setStatus({
-          state: "error",
-          message: "Images failed to load — check your API key.",
-        });
-        setGenerating(false);
-        return;
-      }
-
-      setRawImages(loaded);
-      setImages(loaded);
-      setCanDownload(true);
-      setStatus({
-        state: "success",
-        message: `Done — ${loaded.length} backdrops.`,
-      });
-    } catch (err) {
-      setStatus({ state: "error", message: "Error: " + err.message });
-    } finally {
-      setGenerating(false);
-    }
-  }, [tmdbKey, traktKey, mdblistKey, source, excludedPaths]);
-
-  const reshuffleImages = () => {
-    if (rawImages.length === 0) return;
-    setImages(shuffle(rawImages));
-    setStatus({ state: "success", message: "Images reshuffled." });
+  const resetAll = () => {
+    setSource(DEFAULT_SOURCE);
+    setLayout(DEFAULT_LAYOUT);
+    setOverlay(DEFAULT_OVERLAY);
+    setText(DEFAULT_TEXT);
+    resetSession();
+    setSettingsOpen(false);
   };
 
   return (
@@ -572,9 +267,7 @@ export default function App() {
           <CanvasPreview
             images={images}
             imageType={source.imageType}
-            onImageTypeChange={(v) =>
-              setSource((s) => ({ ...s, imageType: v }))
-            }
+            onImageTypeChange={(v) => setSource((s) => ({ ...s, imageType: v }))}
             layout={layout}
             overlay={overlay}
             text={text}
