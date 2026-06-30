@@ -4,13 +4,12 @@ Generate streaming-style hero backdrop images from TMDB — download as a PNG re
 
 <img width="1200" alt="CleanShot 2026-06-29 at 23 40 41@2x" src="https://github.com/user-attachments/assets/27bc8368-0e14-4da4-a86d-7968e1cd5905" />
 
-
 ## Features
 
 **Image sources**
 
 - **TMDB Filter** — pull from Popular, Top Rated, Trending This Week, Now Playing, or On The Air, filtered by genre (including Anime), streaming service, or decade
-- **Trakt Lists** — paste any public Trakt list URL; movies and shows are detected automatically, mixed lists supported
+- **Trakt** — browse trending or popular movies and shows directly, search any user's public lists by username, or paste a direct list URL; movies and shows are detected automatically, mixed lists supported
 - **MDBList** — browse your own lists, official MDBList curated collections, the top 25 public lists, or search any user's lists by username; also accepts a direct URL
 
 **Backdrop styles**
@@ -86,7 +85,7 @@ npm run dev
 
 - [React](https://react.dev/) + [Vite](https://vitejs.dev/)
 - [TMDB API](https://developer.themoviedb.org/docs)
-- [Trakt API](https://trakt.docs.apiary.io/)
-- [MDBList API](https://mdblist.com/api)
+- [Trakt API](https://docs.trakt.tv/docs/getting-started)
+- [MDBList API](https://docs.mdblist.com/docs/api)
 - HTML Canvas for rendering and export
 - GitHub Pages for hosting
