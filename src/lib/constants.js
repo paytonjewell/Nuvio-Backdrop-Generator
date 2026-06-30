@@ -58,12 +58,12 @@ export const TEXT_FONTS = [
 
 export const WATCH_PROVIDERS = [
   { id: "8", name: "Netflix" },
-  { id: "10", name: "Amazon Prime" },
+  { id: "9", name: "Amazon Prime" },
   { id: "337", name: "Disney+" },
   { id: "1899", name: "HBO Max" },
-  { id: "350", name: "Apple TV+" },
+  { id: "350", name: "Apple TV" },
   { id: "15", name: "Hulu" },
-  { id: "2303", name: "Paramount+" },
+  { id: "2303|2616", name: "Paramount+" },
   { id: "386|387", name: "Peacock" },
   { id: "290", name: "Hallmark" },
   { id: "99", name: "Shudder" },
