@@ -19,6 +19,7 @@ import {
   LANGUAGES,
 } from "../lib/constants";
 import MDBListBrowser, { MDBLIST_MODES } from "./MDBListBrowser";
+import TraktBrowser, { TRAKT_MODES } from "./TraktBrowser";
 
 const TIME_SENSITIVE_SORTS = [
   "trending_week",
@@ -28,7 +29,7 @@ const TIME_SENSITIVE_SORTS = [
   "airing_today",
 ];
 
-export default function ImageSource({ source, onChange, onReset, mdblistKey }) {
+export default function ImageSource({ source, onChange, onReset, traktKey, mdblistKey }) {
   const { tab, filter, trakt, mdblist } = source;
   const { collapsed, toggle } = useCollapsed("nuvio_collapsed_imagesource");
 
@@ -239,14 +240,42 @@ export default function ImageSource({ source, onChange, onReset, mdblistKey }) {
           {tab === "trakt" && (
             <>
               <Field>
-                <FieldLabel>Trakt List URL</FieldLabel>
-                <input
-                  type="text"
-                  value={trakt.url}
-                  onChange={(e) => setTrakt({ url: e.target.value })}
-                  placeholder="https://trakt.tv/users/username/lists/listname"
-                />
+                <FieldLabel>Source</FieldLabel>
+                <select
+                  value={trakt.mode}
+                  onChange={(e) =>
+                    setTrakt({
+                      mode: e.target.value,
+                      listId: "",
+                      selectedListName: "",
+                    })
+                  }
+                >
+                  {TRAKT_MODES.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
               </Field>
+
+              {trakt.mode === "url" ? (
+                <Field>
+                  <FieldLabel>Trakt List URL</FieldLabel>
+                  <input
+                    type="text"
+                    value={trakt.url}
+                    onChange={(e) => setTrakt({ url: e.target.value })}
+                    placeholder="https://trakt.tv/users/username/lists/listname"
+                  />
+                </Field>
+              ) : (
+                <TraktBrowser
+                  trakt={trakt}
+                  traktKey={traktKey}
+                  onChange={setTrakt}
+                />
+              )}
             </>
           )}
 

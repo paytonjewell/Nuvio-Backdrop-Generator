@@ -23,6 +23,15 @@ export async function validateTraktKey(key) {
   return res.ok
 }
 
+export async function fetchTraktLists(endpoint, traktKey) {
+  if (!traktKey) throw new Error('Please enter your Trakt Client ID')
+  const res = await fetch(`https://api.trakt.tv/${endpoint}?limit=100`, {
+    headers: { 'trakt-api-version': '2', 'trakt-api-key': traktKey },
+  })
+  if (!res.ok) throw new Error('Trakt error ' + res.status + ' — check your Client ID')
+  return res.json()
+}
+
 async function batchedAllSettled(items, fn, batchSize = 40) {
   const results = []
   for (let i = 0; i < items.length; i += batchSize) {
@@ -182,17 +191,47 @@ export async function fetchFilterImages({ type, sort, genre, provider, decade, l
 }
 
 // Always returns both { backdrop: [...], poster: [...] }
-export async function fetchTraktImages({ url, traktKey, apiKey }) {
-  const m = url.match(/trakt\.tv\/users\/([^/]+)\/lists\/([^/?]+)/)
-  if (!m) throw new Error('Invalid Trakt URL format')
-  const [, user, list] = m
+export async function fetchTraktImages({ url, mode, listId, mediaType, traktKey, apiKey }) {
   if (!traktKey) throw new Error('Please enter your Trakt Client ID')
-  const res = await fetch(
-    `https://api.trakt.tv/users/${user}/lists/${list}/items?limit=100`,
-    { headers: { 'trakt-api-version': '2', 'trakt-api-key': traktKey } }
-  )
-  if (!res.ok) throw new Error('Trakt error ' + res.status + ' — check Client ID and that the list is public')
-  const items = await res.json()
+
+  let items
+  if (!mode || mode === 'url') {
+    const m = url?.match(/trakt\.tv\/users\/([^/]+)\/lists\/([^/?]+)/)
+    if (!m) throw new Error('Invalid Trakt URL format')
+    const [, user, list] = m
+    const res = await fetch(
+      `https://api.trakt.tv/users/${user}/lists/${list}/items?limit=100`,
+      { headers: { 'trakt-api-version': '2', 'trakt-api-key': traktKey } }
+    )
+    if (!res.ok) throw new Error('Trakt error ' + res.status + ' — check Client ID and that the list is public')
+    items = await res.json()
+  } else if (mode === 'trending-media' || mode === 'popular-media') {
+    const typePath = mediaType === 'shows' ? 'shows' : 'movies'
+    const sortPath = mode === 'trending-media' ? 'trending' : 'popular'
+    const res = await fetch(
+      `https://api.trakt.tv/${typePath}/${sortPath}?limit=100`,
+      { headers: { 'trakt-api-version': '2', 'trakt-api-key': traktKey } }
+    )
+    if (!res.ok) throw new Error('Trakt error ' + res.status + ' — check your Client ID')
+    const data = await res.json()
+    items = data.map(item => {
+      if (typePath === 'movies') {
+        const movie = mode === 'trending-media' ? item.movie : item
+        return { type: 'movie', movie }
+      } else {
+        const show = mode === 'trending-media' ? item.show : item
+        return { type: 'show', show }
+      }
+    })
+  } else {
+    if (!listId) throw new Error('Please select a list first')
+    const res = await fetch(
+      `https://api.trakt.tv/lists/${listId}/items?limit=100`,
+      { headers: { 'trakt-api-version': '2', 'trakt-api-key': traktKey } }
+    )
+    if (!res.ok) throw new Error('Trakt error ' + res.status + ' — check your Client ID')
+    items = await res.json()
+  }
 
   const lookups = items
     .map(item => {

@@ -30,7 +30,10 @@ function getSourceKey(source) {
     return `filter|${type}|${sort}|${genre}|${provider}`;
   }
   if (source.tab === "trakt") {
-    return `trakt|${source.trakt.url}`;
+    const { mode, url, listId, mediaType } = source.trakt;
+    if (mode === "url") return `trakt|url|${url}`;
+    if (mode === "trending-media" || mode === "popular-media") return `trakt|${mode}|${mediaType}`;
+    return `trakt|user|${listId}`;
   }
   const { mode, url, listId } = source.mdblist;
   return `mdblist|${mode}|${mode === "url" ? url : listId}`;
@@ -48,7 +51,14 @@ const DEFAULT_SOURCE = {
     language: "",
     excludeNC17: false,
   },
-  trakt: { url: "" },
+  trakt: {
+    mode: "url",
+    url: "",
+    username: "",
+    listId: "",
+    selectedListName: "",
+    mediaType: "movies",
+  },
   mdblist: {
     mode: "url",
     url: "",
@@ -335,7 +345,10 @@ export default function App() {
         });
       } else if (source.tab === "trakt") {
         allPaths = await fetchTraktImages({
+          mode: source.trakt.mode,
           url: source.trakt.url,
+          listId: source.trakt.listId,
+          mediaType: source.trakt.mediaType,
           traktKey,
           apiKey: tmdbKey,
         });
@@ -510,6 +523,7 @@ export default function App() {
               source={source}
               onChange={setSource}
               onReset={resetSource}
+              traktKey={traktKey}
               mdblistKey={mdblistKey}
             />
             <LayoutSettings
