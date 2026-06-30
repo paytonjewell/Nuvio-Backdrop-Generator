@@ -7,9 +7,9 @@ export function ResetButton({ onClick }) {
   )
 }
 
-export function PrimaryButton({ children, onClick, disabled }) {
+export function PrimaryButton({ children, onClick, disabled, style }) {
   return (
-    <button className={s.btnPrimary} onClick={onClick} disabled={disabled}>{children}</button>
+    <button className={s.btnPrimary} onClick={onClick} disabled={disabled} style={style}>{children}</button>
   )
 }
 

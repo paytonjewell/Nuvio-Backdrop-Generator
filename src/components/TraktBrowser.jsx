@@ -61,6 +61,7 @@ export default function TraktBrowser({ trakt, traktKey, onChange }) {
           >
             <option value="movies">Movies</option>
             <option value="shows">Shows</option>
+            <option value="both">Movies &amp; Shows</option>
           </select>
         </Field>
       )}

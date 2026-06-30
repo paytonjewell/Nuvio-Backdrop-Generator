@@ -92,15 +92,16 @@ export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, exclude
       let allPaths;
       if (source.tab === "filter") {
         allPaths = await fetchFilterImages({
-          type: source.filter.type,
-          sort: source.filter.sort,
-          genre: source.filter.genre,
-          provider: source.filter.provider,
-          decade: source.filter.decade,
-          language: source.filter.language,
-          excludeNC17: source.filter.excludeNC17,
-          apiKey: tmdbKey,
-        });
+            type: source.filter.type,
+            sort: source.filter.sort,
+            genre: source.filter.genre,
+            provider: source.filter.provider,
+            decade: source.filter.decade,
+            language: source.filter.language,
+            excludeNC17: source.filter.excludeNC17,
+            apiKey: tmdbKey,
+            ...(source.filter.type === "both" && { maxBackdrops: 150 }),
+          });
       } else if (source.tab === "trakt") {
         allPaths = await fetchTraktImages({
           mode: source.trakt.mode,

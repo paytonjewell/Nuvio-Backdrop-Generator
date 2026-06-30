@@ -1,4 +1,4 @@
-import { TMDB_IMAGE_BASE } from './constants'
+import { TMDB_IMAGE_BASE, COMBINED_GENRES } from './constants'
 
 export async function fetchTMDB(endpoint, params = {}, apiKey) {
   if (!apiKey) throw new Error('No TMDB API key provided')
@@ -90,7 +90,7 @@ export async function fetchMDBListImages({ url, listId, mediaType, mdblistKey, a
   if (listId) {
     listPath = String(listId)
   } else {
-    const m = url?.match(/mdblist\.com\/lists\/(.+?)(?:[/?]|$)/)
+    const m = url?.match(/mdblist\.com\/lists\/([^?#]+)/)
     if (!m) throw new Error('Invalid MDBList URL — expected https://mdblist.com/lists/username/listname')
     listPath = m[1].replace(/\/$/, '')
   }
@@ -136,7 +136,38 @@ export async function fetchMDBListImages({ url, listId, mediaType, mdblistKey, a
 }
 
 // Always returns both { backdrop: [...], poster: [...] }
-export async function fetchFilterImages({ type, sort, genre, provider, decade, language, excludeNC17, apiKey }) {
+export async function fetchFilterImages({ type, sort, genre, provider, decade, language, excludeNC17, apiKey, maxBackdrops = 200 }) {
+  // "Movies & Shows" — trending uses the single /trending/all/week endpoint;
+  // all other sorts run two parallel single-type requests and merge.
+  if (type === 'both') {
+    const combined = genre ? COMBINED_GENRES.find(g => g.id === genre) : null
+    const useDiscover = !!(genre || provider || decade || language || excludeNC17)
+    if (sort === 'trending_week' && !useDiscover) {
+      const backdrops = new Set(), posters = new Set()
+      let page = 1
+      while (backdrops.size < maxBackdrops) {
+        const data = await fetchTMDB('/trending/all/week', { page }, apiKey)
+        for (const item of data.results) {
+          if (item.backdrop_path) backdrops.add(item.backdrop_path)
+          if (item.poster_path) posters.add(item.poster_path)
+        }
+        if (page >= Math.min(data.total_pages, 20)) break
+        page++
+      }
+      return { backdrop: [...backdrops], poster: [...posters] }
+    }
+    const half = Math.ceil(maxBackdrops / 2)
+    const base = { sort, provider, decade, language, excludeNC17, apiKey, maxBackdrops: half }
+    const [movies, shows] = await Promise.all([
+      fetchFilterImages({ ...base, type: 'movie', genre: combined ? combined.movieGenre : '' }),
+      fetchFilterImages({ ...base, type: 'tv',    genre: combined ? combined.tvGenre   : '' }),
+    ])
+    return {
+      backdrop: [...movies.backdrop.slice(0, half), ...shows.backdrop.slice(0, half)],
+      poster:   [...movies.poster.slice(0, half),   ...shows.poster.slice(0, half)],
+    }
+  }
+
   let endpoint, params = {}
 
   const useDiscover = !!(genre || provider || decade || language || excludeNC17)
@@ -178,7 +209,7 @@ export async function fetchFilterImages({ type, sort, genre, provider, decade, l
   const backdrops = new Set()
   const posters = new Set()
   let page = 1
-  while (backdrops.size < 200) {
+  while (backdrops.size < maxBackdrops) {
     const data = await fetchTMDB(endpoint, { ...params, page }, apiKey)
     for (const item of data.results) {
       if (item.backdrop_path) backdrops.add(item.backdrop_path)
@@ -206,23 +237,40 @@ export async function fetchTraktImages({ url, mode, listId, mediaType, traktKey,
     if (!res.ok) throw new Error('Trakt error ' + res.status + ' — check Client ID and that the list is public')
     items = await res.json()
   } else if (mode === 'trending-media' || mode === 'popular-media') {
-    const typePath = mediaType === 'shows' ? 'shows' : 'movies'
     const sortPath = mode === 'trending-media' ? 'trending' : 'popular'
-    const res = await fetch(
-      `https://api.trakt.tv/${typePath}/${sortPath}?limit=100`,
-      { headers: { 'trakt-api-version': '2', 'trakt-api-key': traktKey } }
-    )
-    if (!res.ok) throw new Error('Trakt error ' + res.status + ' — check your Client ID')
-    const data = await res.json()
-    items = data.map(item => {
-      if (typePath === 'movies') {
-        const movie = mode === 'trending-media' ? item.movie : item
-        return { type: 'movie', movie }
-      } else {
-        const show = mode === 'trending-media' ? item.show : item
-        return { type: 'show', show }
-      }
-    })
+    const isTrending = mode === 'trending-media'
+    const traktHeaders = { 'trakt-api-version': '2', 'trakt-api-key': traktKey }
+
+    const fetchTypePath = async (typePath) => {
+      const res = await fetch(
+        `https://api.trakt.tv/${typePath}/${sortPath}?limit=100`,
+        { headers: traktHeaders }
+      )
+      if (!res.ok) throw new Error('Trakt error ' + res.status + ' — check your Client ID')
+      const data = await res.json()
+      return data.map(item =>
+        typePath === 'movies'
+          ? { type: 'movie', movie: isTrending ? item.movie : item }
+          : { type: 'show',  show:  isTrending ? item.show  : item }
+      )
+    }
+
+    if (mediaType === 'both') {
+      const endpoint = isTrending ? 'media/trending' : 'media/popular'
+      const res = await fetch(
+        `https://api.trakt.tv/${endpoint}?limit=100`,
+        { headers: traktHeaders }
+      )
+      if (!res.ok) throw new Error('Trakt error ' + res.status + ' — check your Client ID')
+      const data = await res.json()
+      items = data.map(item =>
+        item.type === 'movie'
+          ? { type: 'movie', movie: item.movie }
+          : { type: 'show',  show:  item.show  }
+      )
+    } else {
+      items = await fetchTypePath(mediaType === 'shows' ? 'shows' : 'movies')
+    }
   } else {
     if (!listId) throw new Error('Please select a list first')
     const res = await fetch(

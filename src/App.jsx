@@ -13,6 +13,9 @@ import {
   SecondaryButton,
 } from "./components/ui/index.js";
 import DownloadModal from "./components/DownloadModal";
+import NuvioAuthModal from "./components/NuvioAuthModal";
+import CollectionsModal from "./components/CollectionsModal";
+import { getSession, signOut } from "./lib/nuvioAuth";
 import {
   DEFAULT_SOURCE,
   DEFAULT_LAYOUT,
@@ -56,6 +59,10 @@ export default function App() {
   const [downloadModalOpen, setDownloadModalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [excludedModalOpen, setExcludedModalOpen] = useState(false);
+  const [nuvioAuthOpen, setNuvioAuthOpen] = useState(false);
+  const [collectionsOpen, setCollectionsOpen] = useState(false);
+  const [nuvioSession, setNuvioSession] = useState(() => getSession());
+  const pendingCollections = useRef(false);
   const [excludedPaths, setExcludedPaths] = useState(() => {
     try {
       return new Set(JSON.parse(localStorage.getItem("nuvio_excluded") || "[]"));
@@ -136,6 +143,32 @@ export default function App() {
     setSettingsOpen(false);
   };
 
+  const handleNuvioSignIn = (session) => {
+    setNuvioSession(session);
+    setNuvioAuthOpen(false);
+    if (pendingCollections.current) {
+      pendingCollections.current = false;
+      setCollectionsOpen(true);
+    }
+  };
+
+  const handleSaveToCollection = () => {
+    if (nuvioSession) {
+      setCollectionsOpen(true);
+    } else {
+      pendingCollections.current = true;
+      setNuvioAuthOpen(true);
+    }
+  };
+
+  const handleNuvioSignOut = async () => {
+    if (nuvioSession?.access_token) {
+      await signOut(nuvioSession.access_token);
+    }
+    setNuvioSession(null);
+    setSettingsOpen(false);
+  };
+
   return (
     <div className={s.app}>
       <header className={s.header}>
@@ -175,6 +208,27 @@ export default function App() {
                   onClick={() => setSettingsOpen(false)}
                 />
                 <div className={s.settingsMenu}>
+                  {nuvioSession ? (
+                    <>
+                      <div className={s.settingsMenuUser}>
+                        {nuvioSession.user?.email}
+                      </div>
+                      <button className={s.settingsMenuItem} onClick={handleNuvioSignOut}>
+                        Sign out of Nuvio
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className={s.settingsMenuItem}
+                      onClick={() => {
+                        setNuvioAuthOpen(true);
+                        setSettingsOpen(false);
+                      }}
+                    >
+                      Sign in with Nuvio
+                    </button>
+                  )}
+                  <div className={s.settingsMenuDivider} />
                   <button
                     className={s.settingsMenuItem}
                     onClick={() => {
@@ -196,6 +250,27 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {nuvioAuthOpen && (
+        <NuvioAuthModal
+          onSuccess={handleNuvioSignIn}
+          onClose={() => setNuvioAuthOpen(false)}
+        />
+      )}
+
+      {collectionsOpen && nuvioSession && (
+        <CollectionsModal
+          accessToken={nuvioSession.access_token}
+          onClose={() => setCollectionsOpen(false)}
+          onSessionExpired={() => { setNuvioSession(null); setCollectionsOpen(false); }}
+          images={images}
+          imageType={source.imageType}
+          layout={layout}
+          overlay={overlay}
+          text={text}
+          excludedPaths={excludedPathsArray}
+        />
+      )}
 
       {excludedModalOpen && (
         <ExcludedModal
@@ -254,12 +329,22 @@ export default function App() {
             <PrimaryButton onClick={generate} disabled={generating}>
               {generating ? "Generating…" : "Generate Backdrop"}
             </PrimaryButton>
-            <SecondaryButton
-              onClick={() => setDownloadModalOpen(true)}
-              disabled={!canDownload}
-            >
-              Download
-            </SecondaryButton>
+            <div style={{ display: "flex", gap: 6 }}>
+              <PrimaryButton
+                onClick={handleSaveToCollection}
+                disabled={!canDownload}
+                style={{ flex: 2, fontSize: 12, padding: "9px 12px", background: "#a855f7" }}
+              >
+                Save to Collection
+              </PrimaryButton>
+              <SecondaryButton
+                onClick={() => setDownloadModalOpen(true)}
+                disabled={!canDownload}
+                style={{ flex: 1 }}
+              >
+                Download
+              </SecondaryButton>
+            </div>
           </div>
         </aside>
 

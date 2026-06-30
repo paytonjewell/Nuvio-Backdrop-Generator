@@ -1,6 +1,23 @@
 export const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
 export const DEFAULT_BG_COLOR = "#0a0a0f";
 
+// Genres that work meaningfully across both movies and TV for the "Movies & Shows" filter.
+// movieGenre / tvGenre are the values passed to TMDB's with_genres (pipe = OR).
+export const COMBINED_GENRES = [
+  { id: "action-adventure", name: "Action & Adventure", movieGenre: "28|12",  tvGenre: 10759 },
+  { id: "animation",        name: "Animation",           movieGenre: 16,       tvGenre: 16    },
+  { id: "anime",            name: "Anime",                movieGenre: "anime",  tvGenre: "anime" },
+  { id: "comedy",           name: "Comedy",               movieGenre: 35,       tvGenre: 35    },
+  { id: "crime",            name: "Crime",                movieGenre: 80,       tvGenre: 80    },
+  { id: "documentary",      name: "Documentary",          movieGenre: 99,       tvGenre: 99    },
+  { id: "drama",            name: "Drama",                movieGenre: 18,       tvGenre: 18    },
+  { id: "family",           name: "Family",               movieGenre: 10751,    tvGenre: 10751 },
+  { id: "mystery",          name: "Mystery",              movieGenre: 9648,     tvGenre: 9648  },
+  { id: "sci-fi-fantasy",   name: "Sci-Fi & Fantasy",    movieGenre: "878|14", tvGenre: 10765 },
+  { id: "war",              name: "War & Politics",       movieGenre: 10752,    tvGenre: 10768 },
+  { id: "western",          name: "Western",              movieGenre: 37,       tvGenre: 37    },
+];
+
 export const MOVIE_GENRES = [
   { id: 28, name: "Action" },
   { id: 12, name: "Adventure" },
@@ -10,6 +27,7 @@ export const MOVIE_GENRES = [
   { id: 80, name: "Crime" },
   { id: 99, name: "Documentary" },
   { id: 18, name: "Drama" },
+  { id: 10751, name: "Family" },
   { id: 14, name: "Fantasy" },
   { id: 27, name: "Horror" },
   { id: 9648, name: "Mystery" },

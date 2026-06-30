@@ -213,7 +213,7 @@
 .btnPrimary {
   width: 100%;
   padding: 11px;
-  background: linear-gradient(135deg, #6c63ff, #a855f7);
+  background: #6c63ff;
   border: none;
   border-radius: 9px;
   color: #fff;

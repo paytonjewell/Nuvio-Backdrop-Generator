@@ -12,6 +12,7 @@ import {
 import {
   MOVIE_GENRES,
   TV_GENRES,
+  COMBINED_GENRES,
   MOVIE_SORT_OPTIONS,
   TV_SORT_OPTIONS,
   WATCH_PROVIDERS,
@@ -33,9 +34,9 @@ export default function ImageSource({ source, onChange, onReset, traktKey, mdbli
   const { tab, filter, trakt, mdblist } = source;
   const { collapsed, toggle } = useCollapsed("nuvio_collapsed_imagesource");
 
-  const genres = filter.type === "movie" ? MOVIE_GENRES : TV_GENRES;
+  const genres = filter.type === "tv" ? TV_GENRES : filter.type === "both" ? COMBINED_GENRES : MOVIE_GENRES;
   const allSortOptions =
-    filter.type === "movie" ? MOVIE_SORT_OPTIONS : TV_SORT_OPTIONS;
+    filter.type === "tv" ? TV_SORT_OPTIONS : MOVIE_SORT_OPTIONS;
   const sortOptions = filter.provider
     ? allSortOptions.filter((o) => o.value !== "trending_week")
     : allSortOptions;
@@ -85,6 +86,7 @@ export default function ImageSource({ source, onChange, onReset, traktKey, mdbli
                 >
                   <option value="movie">Movies</option>
                   <option value="tv">TV Shows</option>
+                  <option value="both">Movies &amp; Shows</option>
                 </select>
               </Field>
               <Field>
@@ -204,9 +206,11 @@ export default function ImageSource({ source, onChange, onReset, traktKey, mdbli
                       gap: 5,
                     }}
                   >
-                    {filter.type === "movie"
-                      ? "Exclude NC-17"
-                      : "Exclude TV-MA"}
+                    {filter.type === "tv"
+                      ? "Exclude TV-MA"
+                      : filter.type === "both"
+                      ? "Exclude NC-17 / TV-MA"
+                      : "Exclude NC-17"}
                     <span
                       title="Best-effort only. Relies on TMDB certification data, which is incomplete — films without a US rating entry in TMDB will still appear."
                       style={{
