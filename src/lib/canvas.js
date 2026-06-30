@@ -25,15 +25,17 @@ export function hitTestCanvas(canvasX, canvasY, images, settings) {
   const { gap, scale, stagger, autoStagger = true, angleDeg, offsetX = 0, offsetY = 0,
           imageType = 'backdrop', width = CANVAS_W, height = CANVAS_H } = settings
   const W = width, H = height
-  const cardW = Math.round(320 * scale * (W / 1920))
+  const dpr = W / 1920
+  const cardW = Math.round(320 * scale * dpr)
   const cardH = imageType === 'poster' ? Math.round(cardW * 3 / 2) : Math.round(cardW * 9 / 16)
-  const effectiveStagger = autoStagger ? Math.round((cardH + gap) / 2) : stagger
+  const scaledGap = Math.round(gap * dpr)
+  const effectiveStagger = autoStagger ? Math.round((cardH + scaledGap) / 2) : Math.round(stagger * dpr)
   const angleRad = -(angleDeg * Math.PI) / 180
   const diag = Math.ceil(Math.sqrt(W * W + H * H))
-  const numCols = Math.ceil(diag / (cardW + gap)) + 4
-  const numRows = Math.ceil(diag / (cardH + gap)) + 4
+  const numCols = Math.ceil(diag / (cardW + scaledGap)) + 4
+  const numRows = Math.ceil(diag / (cardH + scaledGap)) + 4
   const visibleCols = numCols - 4
-  const centerCol = Math.min(Math.round((diag - cardW) / (2 * (cardW + gap))), visibleCols - 1)
+  const centerCol = Math.min(Math.round((diag - cardW) / (2 * (cardW + scaledGap))), visibleCols - 1)
 
   // Inverse transform: canvas pixel → grid pixel
   const dx = canvasX - (W / 2 + offsetX)
@@ -48,12 +50,12 @@ export function hitTestCanvas(canvasX, canvasY, images, settings) {
   for (const col of colOrder) {
     const rowOffset = col % 2 === 0 ? 0 : effectiveStagger
     for (let row = -1; row < numRows; row++) {
-      const cardGy = row * (cardH + gap) + cardH / 2 + rowOffset
-      const cardGx = col * (cardW + gap) + cardW / 2
+      const cardGy = row * (cardH + scaledGap) + cardH / 2 + rowOffset
+      const cardGx = col * (cardW + scaledGap) + cardW / 2
       const projY = (cardGx - diag / 2) * sin_a + (cardGy - diag / 2) * cos_a + H / 2
       if (projY < -(cardH / 2) || projY > H + cardH / 2) continue
       if (imgIdx >= images.length) return null
-      const cardX = col * (cardW + gap), cardY = row * (cardH + gap) + rowOffset
+      const cardX = col * (cardW + scaledGap), cardY = row * (cardH + scaledGap) + rowOffset
       if (gx >= cardX && gx <= cardX + cardW && gy >= cardY && gy <= cardY + cardH)
         return imgIdx
       imgIdx++
@@ -166,11 +168,14 @@ export function renderCanvas(canvas, images, settings, text = {}, excludedPaths 
   const { gap, scale, radius, stagger, autoStagger = true, angleDeg, bgColor, overlayPreset, overlayOpacity, overlayReach = 0.6, offsetX = 0, offsetY = 0, imageType = 'backdrop', imageOpacity = 1, width = CANVAS_W, height = CANVAS_H } = settings
   const W = width, H = height
 
-  const cardW = Math.round(320 * scale * (W / 1920))
+  const dpr = W / 1920
+  const cardW = Math.round(320 * scale * dpr)
   const cardH = imageType === 'poster'
     ? Math.round(cardW * 3 / 2)
     : Math.round(cardW * 9 / 16)
-  const effectiveStagger = autoStagger ? Math.round((cardH + gap) / 2) : stagger
+  const scaledGap    = Math.round(gap    * dpr)
+  const scaledRadius = Math.round(radius * dpr)
+  const effectiveStagger = autoStagger ? Math.round((cardH + scaledGap) / 2) : Math.round(stagger * dpr)
   const angleRad = -(angleDeg * Math.PI) / 180
 
   canvas.width = W
@@ -183,14 +188,14 @@ export function renderCanvas(canvas, images, settings, text = {}, excludedPaths 
   }
 
   const diag = Math.ceil(Math.sqrt(W * W + H * H))
-  const numCols = Math.ceil(diag / (cardW + gap)) + 4
-  const numRows = Math.ceil(diag / (cardH + gap)) + 4
+  const numCols = Math.ceil(diag / (cardW + scaledGap)) + 4
+  const numRows = Math.ceil(diag / (cardH + scaledGap)) + 4
   // The +4 cols in numCols are off-screen buffer for rotation coverage
   const visibleCols = numCols - 4
 
   // Column whose center aligns closest to the canvas center in rotated space
   const centerCol = Math.min(
-    Math.round((diag - cardW) / (2 * (cardW + gap))),
+    Math.round((diag - cardW) / (2 * (cardW + scaledGap))),
     visibleCols - 1
   )
 
@@ -210,17 +215,17 @@ export function renderCanvas(canvas, images, settings, text = {}, excludedPaths 
       // Check whether this card's center projects onto the canvas vertically.
       // If not, skip the slot without consuming an image so it can be used in
       // the next visible row instead of being wasted off-screen.
-      const gx = col * (cardW + gap) + cardW / 2
-      const gy = row * (cardH + gap) + cardH / 2 + rowOffset
+      const gx = col * (cardW + scaledGap) + cardW / 2
+      const gy = row * (cardH + scaledGap) + cardH / 2 + rowOffset
       const canvasY = (gx - diag / 2) * Math.sin(angleRad) + (gy - diag / 2) * Math.cos(angleRad) + H / 2
       if (canvasY < -(cardH / 2) || canvasY > H + cardH / 2) continue
 
       if (imgIdx >= images.length) break outer
       const img = images[imgIdx++]
-      const x = col * (cardW + gap)
-      const y = row * (cardH + gap) + rowOffset
+      const x = col * (cardW + scaledGap)
+      const y = row * (cardH + scaledGap) + rowOffset
       ctx.save()
-      roundRect(ctx, x, y, cardW, cardH, radius)
+      roundRect(ctx, x, y, cardW, cardH, scaledRadius)
       ctx.clip()
       ctx.globalAlpha = imageOpacity
       ctx.drawImage(img, x, y, cardW, cardH)
