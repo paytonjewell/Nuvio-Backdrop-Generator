@@ -128,8 +128,8 @@
   color: rgba(255, 255, 255, 0.7);
 }
 .viewToggleBtnActive {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e8e8f0;
+  background: #a855f7;
+  color: #fff;
 }
 
 .closeBtn {

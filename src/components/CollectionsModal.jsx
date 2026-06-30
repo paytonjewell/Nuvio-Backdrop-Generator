@@ -143,7 +143,7 @@ export default function CollectionsModal({
     setSelectedCollection(collection);
     setSelectedFolder(folder);
     setThumbImgFailed(false);
-    setView("current");
+    setView("new");
     setNewPreviewUrl("");
     setSaveError("");
     setStep("folder");
