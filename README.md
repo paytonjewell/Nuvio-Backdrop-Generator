@@ -8,7 +8,7 @@ Generate streaming-style hero backdrop images from TMDB — then save them direc
 
 **Image sources**
 
-- **TMDB Filter** — pull from Popular, Top Rated, Trending This Week, Now Playing, or On The Air, filtered by genre, streaming service, decade, or language. Choose **Movies**, **TV Shows**, or **Movies & Shows** (combined); trending uses TMDB's unified `/trending/all` endpoint, other sorts run parallel movie + TV fetches. A curated combined genre list covers crossovers like Action & Adventure, Sci-Fi & Fantasy, and War & Politics.
+- **TMDB Filter** — pull from Popular, Top Rated, Trending This Week, Now Playing, or On The Air, filtered by genre, streaming service, decade, or language. Choose **Movies**, **TV Shows**, or **Movies & Shows** (combined).
 - **Trakt** — browse trending or popular movies, shows, or both directly (using Trakt's `/media/trending` and `/media/popular` endpoints); search any user's public lists by username, or paste a direct list URL
 - **MDBList** — browse your own lists, official MDBList curated collections, the top 25 public lists, or search any user's lists by username; also accepts a direct URL
 

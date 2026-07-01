@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Field, FieldLabel, Notice } from "./ui/index.js";
+import { Field, FieldLabel, Notice, SearchableSelect } from "./ui/index.js";
 import { fetchMDBLists } from "../lib/tmdb";
 import s from "./MDBListBrowser.module.css";
 
@@ -119,36 +119,30 @@ export default function MDBListBrowser({ mdblist, mdblistKey, onChange }) {
       {!loading && !error && lists.length > 0 && (
         <Field>
           <FieldLabel>Select List</FieldLabel>
-          <select
+          <SearchableSelect
             value={mdblist.listId}
-            onChange={(e) => {
-              const found = lists.find(
-                (l) => getListPath(l) === e.target.value,
-              );
+            onChange={(v) => {
+              const found = lists.find((l) => getListPath(l) === v);
               if (found) selectList(found);
             }}
-          >
-            <option value="">— choose a list —</option>
-            {lists.map((l) => (
-              <option key={l.id} value={getListPath(l)}>
-                {listLabel(l)}
-              </option>
-            ))}
-          </select>
+            options={lists.map((l) => ({ value: getListPath(l), label: listLabel(l) }))}
+            emptyLabel="— choose a list —"
+          />
         </Field>
       )}
 
       {mdblist.mode === "official" && (
         <Field>
           <FieldLabel>Content Type</FieldLabel>
-          <select
+          <SearchableSelect
             value={mdblist.mediaType || ""}
-            onChange={(e) => onChange({ mediaType: e.target.value })}
-          >
-            <option value="">Movies & Shows</option>
-            <option value="movie">Movies</option>
-            <option value="show">Shows</option>
-          </select>
+            onChange={(v) => onChange({ mediaType: v })}
+            options={[
+              { value: "movie", label: "Movies" },
+              { value: "show", label: "Shows" },
+            ]}
+            emptyLabel="Movies & Shows"
+          />
         </Field>
       )}
 

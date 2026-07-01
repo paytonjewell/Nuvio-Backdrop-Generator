@@ -9,3 +9,4 @@ export { ToggleRow } from "./ToggleRow";
 export { TabGroup } from "./TabGroup";
 export { Notice } from "./Notice";
 export { StatusBar } from "./StatusBar";
+export { SearchableSelect } from "./SearchableSelect";

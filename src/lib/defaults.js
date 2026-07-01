@@ -10,7 +10,6 @@ export const DEFAULT_SOURCE = {
     provider: "",
     decade: null,
     language: "",
-    excludeNC17: false,
   },
   trakt: {
     mode: "url",

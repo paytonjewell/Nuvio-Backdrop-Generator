@@ -8,6 +8,7 @@ import {
   CollapseButton,
   Collapsible,
   useCollapsed,
+  SearchableSelect,
 } from "./ui";
 import s from "./TextSettings.module.css";
 import { TEXT_FONTS } from "../lib/constants";
@@ -48,16 +49,11 @@ export default function TextSettings({ text, onChange, onReset }) {
           </Field>
           <Field>
             <FieldLabel>Font</FieldLabel>
-            <select
+            <SearchableSelect
               value={text.font}
-              onChange={(e) => set({ font: e.target.value })}
-            >
-              {TEXT_FONTS.map((f) => (
-                <option key={f.value} value={f.value}>
-                  {f.value}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => set({ font: v })}
+              options={TEXT_FONTS.map((f) => ({ value: f.value, label: f.value }))}
+            />
           </Field>
           <Field>
             <FieldLabel>Size</FieldLabel>

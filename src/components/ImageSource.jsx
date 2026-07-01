@@ -8,6 +8,7 @@ import {
   CollapseButton,
   Collapsible,
   useCollapsed,
+  SearchableSelect,
 } from "./ui/index.js";
 import {
   MOVIE_GENRES,
@@ -30,11 +31,22 @@ const TIME_SENSITIVE_SORTS = [
   "airing_today",
 ];
 
-export default function ImageSource({ source, onChange, onReset, traktKey, mdblistKey }) {
+export default function ImageSource({
+  source,
+  onChange,
+  onReset,
+  traktKey,
+  mdblistKey,
+}) {
   const { tab, filter, trakt, mdblist } = source;
   const { collapsed, toggle } = useCollapsed("nuvio_collapsed_imagesource");
 
-  const genres = filter.type === "tv" ? TV_GENRES : filter.type === "both" ? COMBINED_GENRES : MOVIE_GENRES;
+  const genres =
+    filter.type === "tv"
+      ? TV_GENRES
+      : filter.type === "both"
+        ? COMBINED_GENRES
+        : MOVIE_GENRES;
   const allSortOptions =
     filter.type === "tv" ? TV_SORT_OPTIONS : MOVIE_SORT_OPTIONS;
   const sortOptions = filter.provider
@@ -74,27 +86,23 @@ export default function ImageSource({ source, onChange, onReset, traktKey, mdbli
             <>
               <Field>
                 <FieldLabel>Content Type</FieldLabel>
-                <select
+                <SearchableSelect
                   value={filter.type}
-                  onChange={(e) =>
-                    setFilter({
-                      type: e.target.value,
-                      sort: "popular",
-                      genre: "",
-                    })
+                  onChange={(v) =>
+                    setFilter({ type: v, sort: "popular", genre: "" })
                   }
-                >
-                  <option value="movie">Movies</option>
-                  <option value="tv">TV Shows</option>
-                  <option value="both">Movies &amp; Shows</option>
-                </select>
+                  options={[
+                    { value: "movie", label: "Movies" },
+                    { value: "tv", label: "TV Shows" },
+                    { value: "both", label: "Movies & Shows" },
+                  ]}
+                />
               </Field>
               <Field>
                 <FieldLabel>Source</FieldLabel>
-                <select
+                <SearchableSelect
                   value={filter.sort}
-                  onChange={(e) => {
-                    const sort = e.target.value;
+                  onChange={(sort) => {
                     const timeSensitive = TIME_SENSITIVE_SORTS.includes(sort);
                     setFilter({
                       sort,
@@ -102,142 +110,60 @@ export default function ImageSource({ source, onChange, onReset, traktKey, mdbli
                       ...(timeSensitive && filter.decade && { decade: null }),
                     });
                   }}
-                >
-                  {sortOptions.map((o) => (
-                    <option key={o.value} value={o.value}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
+                  options={sortOptions}
+                />
               </Field>
               {filter.sort !== "trending_week" && (
                 <Field>
                   <FieldLabel>Streaming Service (optional)</FieldLabel>
-                  <select
+                  <SearchableSelect
                     value={filter.provider}
-                    onChange={(e) => setFilter({ provider: e.target.value })}
-                  >
-                    <option value="">Any</option>
-                    {WATCH_PROVIDERS.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(v) => setFilter({ provider: v })}
+                    options={WATCH_PROVIDERS.map((p) => ({
+                      value: p.id,
+                      label: p.name,
+                    }))}
+                    emptyLabel="Any"
+                  />
                 </Field>
               )}
               <Field>
                 <FieldLabel>Genre (optional)</FieldLabel>
-                <select
+                <SearchableSelect
                   value={filter.genre}
-                  onChange={(e) => setFilter({ genre: e.target.value })}
-                >
-                  <option value="">Any Genre</option>
-                  {genres.map((g) => (
-                    <option key={g.id} value={g.id}>
-                      {g.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setFilter({ genre: v })}
+                  options={genres.map((g) => ({ value: g.id, label: g.name }))}
+                  emptyLabel="Any Genre"
+                />
               </Field>
               <Field>
                 <FieldLabel>Language (optional)</FieldLabel>
-                <select
+                <SearchableSelect
                   value={filter.language || ""}
-                  onChange={(e) => setFilter({ language: e.target.value })}
-                >
-                  <option value="">Any Language</option>
-                  {LANGUAGES.map((l) => (
-                    <option key={l.code} value={l.code}>
-                      {l.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(v) => setFilter({ language: v })}
+                  options={LANGUAGES.map((l) => ({
+                    value: l.code,
+                    label: l.name,
+                  }))}
+                  emptyLabel="Any Language"
+                />
               </Field>
               {!isTimeSensitive && (
                 <Field>
                   <FieldLabel>Decade (optional)</FieldLabel>
-                  <select
-                    value={filter.decade ?? ""}
-                    onChange={(e) =>
-                      setFilter({
-                        decade: e.target.value ? Number(e.target.value) : null,
-                      })
+                  <SearchableSelect
+                    value={filter.decade != null ? String(filter.decade) : ""}
+                    onChange={(v) =>
+                      setFilter({ decade: v ? Number(v) : null })
                     }
-                  >
-                    <option value="">Any Era</option>
-                    {DECADES.map((d) => (
-                      <option key={d.value} value={d.value}>
-                        {d.label}
-                      </option>
-                    ))}
-                  </select>
+                    options={DECADES.map((d) => ({
+                      value: String(d.value),
+                      label: d.label,
+                    }))}
+                    emptyLabel="Any Era"
+                  />
                 </Field>
               )}
-              <Field>
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 8,
-                    cursor: "pointer",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={filter.excludeNC17 || false}
-                    onChange={(e) =>
-                      setFilter({ excludeNC17: e.target.checked })
-                    }
-                    style={{
-                      accentColor: "#6c63ff",
-                      cursor: "pointer",
-                      marginTop: 1,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontSize: 11,
-                      color: "rgba(255,255,255,0.5)",
-                      fontWeight: 500,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 5,
-                    }}
-                  >
-                    {filter.type === "tv"
-                      ? "Exclude TV-MA"
-                      : filter.type === "both"
-                      ? "Exclude NC-17 / TV-MA"
-                      : "Exclude NC-17"}
-                    <span
-                      title="Best-effort only. Relies on TMDB certification data, which is incomplete — films without a US rating entry in TMDB will still appear."
-                      style={{
-                        color: "rgba(255,255,255,0.25)",
-                        cursor: "help",
-                        lineHeight: 1,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 12 12"
-                        fill="none"
-                      >
-                        <circle cx="6" cy="6" r="5.5" stroke="currentColor" />
-                        <path
-                          d="M6 5.5v3M6 3.5v.5"
-                          stroke="currentColor"
-                          strokeWidth="1.2"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </span>
-                  </span>
-                </label>
-              </Field>
             </>
           )}
 
@@ -245,22 +171,13 @@ export default function ImageSource({ source, onChange, onReset, traktKey, mdbli
             <>
               <Field>
                 <FieldLabel>Source</FieldLabel>
-                <select
+                <SearchableSelect
                   value={trakt.mode}
-                  onChange={(e) =>
-                    setTrakt({
-                      mode: e.target.value,
-                      listId: "",
-                      selectedListName: "",
-                    })
+                  onChange={(v) =>
+                    setTrakt({ mode: v, listId: "", selectedListName: "" })
                   }
-                >
-                  {TRAKT_MODES.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
+                  options={TRAKT_MODES}
+                />
               </Field>
 
               {trakt.mode === "url" ? (
@@ -287,22 +204,13 @@ export default function ImageSource({ source, onChange, onReset, traktKey, mdbli
             <>
               <Field>
                 <FieldLabel>Source</FieldLabel>
-                <select
+                <SearchableSelect
                   value={mdblist.mode}
-                  onChange={(e) =>
-                    setMdblist({
-                      mode: e.target.value,
-                      listId: "",
-                      selectedListName: "",
-                    })
+                  onChange={(v) =>
+                    setMdblist({ mode: v, listId: "", selectedListName: "" })
                   }
-                >
-                  {MDBLIST_MODES.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
+                  options={MDBLIST_MODES}
+                />
               </Field>
 
               {mdblist.mode === "url" ? (

@@ -24,7 +24,13 @@ async function restoreFromCache(source, excludedPaths) {
   return rawCached?.filter((p) => !excluded.has(p)) ?? [];
 }
 
-export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, excludedPaths }) {
+export function useImageSession({
+  tmdbKey,
+  traktKey,
+  mdblistKey,
+  source,
+  excludedPaths,
+}) {
   const [images, setImages] = useState([]);
   const [rawImages, setRawImages] = useState([]);
   const [status, setStatus] = useState(INITIAL_STATUS);
@@ -44,7 +50,10 @@ export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, exclude
           setRawImages(loaded);
           setImages(loaded);
           setCanDownload(true);
-          setStatus({ state: "success", message: `Done — ${loaded.length} backdrops.` });
+          setStatus({
+            state: "success",
+            message: `Done — ${loaded.length} backdrops.`,
+          });
         }
       } catch {}
     };
@@ -66,7 +75,10 @@ export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, exclude
             setRawImages(loaded);
             setImages(loaded);
             setCanDownload(true);
-            setStatus({ state: "success", message: `Done — ${loaded.length} backdrops.` });
+            setStatus({
+              state: "success",
+              message: `Done — ${loaded.length} backdrops.`,
+            });
             return;
           }
         }
@@ -81,7 +93,10 @@ export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, exclude
 
   const generate = useCallback(async () => {
     if (!tmdbKey) {
-      setStatus({ state: "error", message: "Please enter your TMDB API key first." });
+      setStatus({
+        state: "error",
+        message: "Please enter your TMDB API key first.",
+      });
       return;
     }
     setGenerating(true);
@@ -92,16 +107,15 @@ export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, exclude
       let allPaths;
       if (source.tab === "filter") {
         allPaths = await fetchFilterImages({
-            type: source.filter.type,
-            sort: source.filter.sort,
-            genre: source.filter.genre,
-            provider: source.filter.provider,
-            decade: source.filter.decade,
-            language: source.filter.language,
-            excludeNC17: source.filter.excludeNC17,
-            apiKey: tmdbKey,
-            ...(source.filter.type === "both" && { maxBackdrops: 150 }),
-          });
+          type: source.filter.type,
+          sort: source.filter.sort,
+          genre: source.filter.genre,
+          provider: source.filter.provider,
+          decade: source.filter.decade,
+          language: source.filter.language,
+          apiKey: tmdbKey,
+          ...(source.filter.type === "both" && { maxBackdrops: 150 }),
+        });
       } else if (source.tab === "trakt") {
         allPaths = await fetchTraktImages({
           mode: source.trakt.mode,
@@ -114,7 +128,8 @@ export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, exclude
       } else {
         allPaths = await fetchMDBListImages({
           url: source.mdblist.mode === "url" ? source.mdblist.url : undefined,
-          listId: source.mdblist.mode !== "url" ? source.mdblist.listId : undefined,
+          listId:
+            source.mdblist.mode !== "url" ? source.mdblist.listId : undefined,
           mediaType: source.mdblist.mediaType || undefined,
           mdblistKey,
           apiKey: tmdbKey,
@@ -136,16 +151,25 @@ export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, exclude
         (p) => !excludedPaths.has(p),
       );
       if (activePaths.length === 0) {
-        setStatus({ state: "error", message: "No images found — try a different filter." });
+        setStatus({
+          state: "error",
+          message: "No images found — try a different filter.",
+        });
         setGenerating(false);
         return;
       }
 
-      setStatus({ state: "loading", message: `Loading ${activePaths.length} images…` });
+      setStatus({
+        state: "loading",
+        message: `Loading ${activePaths.length} images…`,
+      });
       const loaded = await loadImages(activePaths);
 
       if (loaded.length === 0) {
-        setStatus({ state: "error", message: "Images failed to load — check your API key." });
+        setStatus({
+          state: "error",
+          message: "Images failed to load — check your API key.",
+        });
         setGenerating(false);
         return;
       }
@@ -153,7 +177,10 @@ export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, exclude
       setRawImages(loaded);
       setImages(loaded);
       setCanDownload(true);
-      setStatus({ state: "success", message: `Done — ${loaded.length} backdrops.` });
+      setStatus({
+        state: "success",
+        message: `Done — ${loaded.length} backdrops.`,
+      });
     } catch (err) {
       setStatus({ state: "error", message: "Error: " + err.message });
     } finally {
@@ -171,7 +198,9 @@ export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, exclude
     try {
       const stored = JSON.parse(localStorage.getItem(CACHE_KEY) || "{}");
       const cachedPaths =
-        stored.sourceKey === getSourceKey(source) ? stored[source.imageType] : null;
+        stored.sourceKey === getSourceKey(source)
+          ? stored[source.imageType]
+          : null;
       if (!cachedPaths?.length) return;
       const filtered = cachedPaths.filter((p) => !excludedPaths.has(p));
       if (!filtered.length) return;
@@ -181,7 +210,10 @@ export function useImageSession({ tmdbKey, traktKey, mdblistKey, source, exclude
         setRawImages(loaded);
         setImages(loaded);
         setCanDownload(true);
-        setStatus({ state: "success", message: `Done — ${loaded.length} backdrops.` });
+        setStatus({
+          state: "success",
+          message: `Done — ${loaded.length} backdrops.`,
+        });
       }
     } catch {}
   };

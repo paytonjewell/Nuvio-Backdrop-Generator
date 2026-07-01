@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Field, FieldLabel, Notice } from "./ui/index.js";
+import { Field, FieldLabel, Notice, SearchableSelect } from "./ui/index.js";
 import { fetchTraktLists } from "../lib/tmdb";
 import s from "./MDBListBrowser.module.css";
 
@@ -53,16 +53,15 @@ export default function TraktBrowser({ trakt, traktKey, onChange }) {
       {needsType && (
         <Field>
           <FieldLabel>Content Type</FieldLabel>
-          <select
+          <SearchableSelect
             value={mediaType}
-            onChange={(e) =>
-              onChange({ mediaType: e.target.value })
-            }
-          >
-            <option value="movies">Movies</option>
-            <option value="shows">Shows</option>
-            <option value="both">Movies &amp; Shows</option>
-          </select>
+            onChange={(v) => onChange({ mediaType: v })}
+            options={[
+              { value: "movies", label: "Movies" },
+              { value: "shows", label: "Shows" },
+              { value: "both", label: "Movies & Shows" },
+            ]}
+          />
         </Field>
       )}
 
@@ -92,20 +91,15 @@ export default function TraktBrowser({ trakt, traktKey, onChange }) {
       {!loading && !error && lists.length > 0 && (
         <Field>
           <FieldLabel>Select List</FieldLabel>
-          <select
+          <SearchableSelect
             value={trakt.listId}
-            onChange={(e) => {
-              const found = lists.find((l) => getListId(l) === e.target.value);
+            onChange={(v) => {
+              const found = lists.find((l) => getListId(l) === v);
               if (found) selectList(found);
             }}
-          >
-            <option value="">— choose a list —</option>
-            {lists.map((l) => (
-              <option key={getListId(l)} value={getListId(l)}>
-                {listLabel(l)}
-              </option>
-            ))}
-          </select>
+            options={lists.map((l) => ({ value: getListId(l), label: listLabel(l) }))}
+            emptyLabel="— choose a list —"
+          />
         </Field>
       )}
     </>
