@@ -1,7 +1,7 @@
 export const CACHE_KEY = "nuvio_image_cache";
 
 export const DEFAULT_SOURCE = {
-  tab: "filter",
+  tab: "trakt",
   imageType: "backdrop",
   filter: {
     type: "movie",
@@ -10,9 +10,10 @@ export const DEFAULT_SOURCE = {
     provider: "",
     decade: null,
     language: "",
+    region: "US",
   },
   trakt: {
-    mode: "url",
+    mode: "popular-media",
     url: "",
     username: "",
     listId: "",
@@ -64,8 +65,8 @@ export const DEFAULT_TEXT = {
 
 export function getSourceKey(source) {
   if (source.tab === "filter") {
-    const { type, sort, genre, provider } = source.filter;
-    return `filter|${type}|${sort}|${genre}|${provider}`;
+    const { type, sort, genre, provider, region } = source.filter;
+    return `filter|${type}|${sort}|${genre}|${provider}|${region ?? ""}`;
   }
   if (source.tab === "trakt") {
     const { mode, url, listId, mediaType } = source.trakt;

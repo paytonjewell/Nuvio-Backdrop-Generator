@@ -19,6 +19,7 @@ import {
   WATCH_PROVIDERS,
   DECADES,
   LANGUAGES,
+  REGIONS,
 } from "../lib/constants";
 import MDBListBrowser, { MDBLIST_MODES } from "./MDBListBrowser";
 import TraktBrowser, { TRAKT_MODES } from "./TraktBrowser";
@@ -54,6 +55,7 @@ export default function ImageSource({
     : allSortOptions;
 
   const isTimeSensitive = TIME_SENSITIVE_SORTS.includes(filter.sort);
+  const isNowPlaying = filter.sort === "now_playing";
 
   const setFilter = (patch) =>
     onChange({ ...source, filter: { ...filter, ...patch } });
@@ -74,9 +76,9 @@ export default function ImageSource({
         <Card onReset={onReset}>
           <TabGroup
             tabs={[
-              { value: "filter", label: "TMDB Filter" },
               { value: "trakt", label: "Trakt" },
               { value: "mdblist", label: "MDBList" },
+              { value: "filter", label: "TMDB Filter" },
             ]}
             value={tab}
             onChange={(t) => onChange({ ...source, tab: t })}
@@ -104,16 +106,18 @@ export default function ImageSource({
                   value={filter.sort}
                   onChange={(sort) => {
                     const timeSensitive = TIME_SENSITIVE_SORTS.includes(sort);
+                    const nowPlaying = sort === "now_playing";
                     setFilter({
                       sort,
                       ...(sort === "trending_week" && { provider: "" }),
                       ...(timeSensitive && filter.decade && { decade: null }),
+                      ...(nowPlaying && { genre: "", provider: "", language: "" }),
                     });
                   }}
                   options={sortOptions}
                 />
               </Field>
-              {filter.sort !== "trending_week" && (
+              {!isNowPlaying && filter.sort !== "trending_week" && (
                 <Field>
                   <FieldLabel>Streaming Service (optional)</FieldLabel>
                   <SearchableSelect
@@ -127,27 +131,41 @@ export default function ImageSource({
                   />
                 </Field>
               )}
-              <Field>
-                <FieldLabel>Genre (optional)</FieldLabel>
-                <SearchableSelect
-                  value={filter.genre}
-                  onChange={(v) => setFilter({ genre: v })}
-                  options={genres.map((g) => ({ value: g.id, label: g.name }))}
-                  emptyLabel="Any Genre"
-                />
-              </Field>
-              <Field>
-                <FieldLabel>Language (optional)</FieldLabel>
-                <SearchableSelect
-                  value={filter.language || ""}
-                  onChange={(v) => setFilter({ language: v })}
-                  options={LANGUAGES.map((l) => ({
-                    value: l.code,
-                    label: l.name,
-                  }))}
-                  emptyLabel="Any Language"
-                />
-              </Field>
+              {!isNowPlaying && (
+                <Field>
+                  <FieldLabel>Genre (optional)</FieldLabel>
+                  <SearchableSelect
+                    value={filter.genre}
+                    onChange={(v) => setFilter({ genre: v })}
+                    options={genres.map((g) => ({ value: g.id, label: g.name }))}
+                    emptyLabel="Any Genre"
+                  />
+                </Field>
+              )}
+              {!isNowPlaying && (
+                <Field>
+                  <FieldLabel>Language (optional)</FieldLabel>
+                  <SearchableSelect
+                    value={filter.language || ""}
+                    onChange={(v) => setFilter({ language: v })}
+                    options={LANGUAGES.map((l) => ({
+                      value: l.code,
+                      label: l.name,
+                    }))}
+                    emptyLabel="Any Language"
+                  />
+                </Field>
+              )}
+              {isNowPlaying && (
+                <Field>
+                  <FieldLabel>Region</FieldLabel>
+                  <SearchableSelect
+                    value={filter.region || "US"}
+                    onChange={(v) => setFilter({ region: v })}
+                    options={REGIONS.map((r) => ({ value: r.code, label: r.name }))}
+                  />
+                </Field>
+              )}
               {!isTimeSensitive && (
                 <Field>
                   <FieldLabel>Decade (optional)</FieldLabel>

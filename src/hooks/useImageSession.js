@@ -113,6 +113,7 @@ export function useImageSession({
           provider: source.filter.provider,
           decade: source.filter.decade,
           language: source.filter.language,
+          region: source.filter.region,
           apiKey: tmdbKey,
           ...(source.filter.type === "both" && { maxBackdrops: 150 }),
         });

@@ -184,6 +184,7 @@ export async function fetchFilterImages({
   provider,
   decade,
   language,
+  region,
   apiKey,
   maxBackdrops = 200,
 }) {
@@ -273,18 +274,20 @@ export async function fetchFilterImages({
   } else {
     endpoint = `/${type}/${sort}`;
     params = { include_adult: "false" };
+    if (sort === "now_playing" && region) params.region = region;
   }
 
   const backdrops = new Set();
   const posters = new Set();
   let page = 1;
+  const maxPages = sort === "now_playing" ? 5 : 20;
   while (backdrops.size < maxBackdrops) {
     const data = await fetchTMDB(endpoint, { ...params, page }, apiKey);
     for (const item of data.results) {
       if (item.backdrop_path) backdrops.add(item.backdrop_path);
       if (item.poster_path) posters.add(item.poster_path);
     }
-    if (page >= Math.min(data.total_pages, 20)) break;
+    if (page >= Math.min(data.total_pages, maxPages)) break;
     page++;
   }
   return { backdrop: [...backdrops], poster: [...posters] };
