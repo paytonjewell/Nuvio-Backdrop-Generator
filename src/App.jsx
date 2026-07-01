@@ -42,6 +42,7 @@ export default function App() {
       filter: { ...DEFAULT_SOURCE.filter, ...(stored.filter || {}) },
       trakt: { ...DEFAULT_SOURCE.trakt, ...(stored.trakt || {}) },
       mdblist: { ...DEFAULT_SOURCE.mdblist, ...(stored.mdblist || {}) },
+      catalog: { ...DEFAULT_SOURCE.catalog, ...(stored.catalog || {}) },
     };
   });
   const [layout, setLayout] = useState(() => ({

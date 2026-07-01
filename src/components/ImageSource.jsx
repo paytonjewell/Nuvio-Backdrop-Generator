@@ -23,6 +23,7 @@ import {
 } from "../lib/constants";
 import MDBListBrowser, { MDBLIST_MODES } from "./MDBListBrowser";
 import TraktBrowser, { TRAKT_MODES } from "./TraktBrowser";
+import AIOCatalogBrowser from "./AIOCatalogBrowser";
 
 const TIME_SENSITIVE_SORTS = [
   "trending_week",
@@ -39,7 +40,7 @@ export default function ImageSource({
   traktKey,
   mdblistKey,
 }) {
-  const { tab, filter, trakt, mdblist } = source;
+  const { tab, filter, trakt, mdblist, catalog } = source;
   const { collapsed, toggle } = useCollapsed("nuvio_collapsed_imagesource");
 
   const genres =
@@ -63,6 +64,8 @@ export default function ImageSource({
     onChange({ ...source, trakt: { ...trakt, ...patch } });
   const setMdblist = (patch) =>
     onChange({ ...source, mdblist: { ...mdblist, ...patch } });
+  const setCatalog = (patch) =>
+    onChange({ ...source, catalog: { ...catalog, ...patch } });
 
   return (
     <div>
@@ -76,9 +79,10 @@ export default function ImageSource({
         <Card onReset={onReset}>
           <TabGroup
             tabs={[
+              { value: "catalog", label: "AIOMetadata" },
               { value: "trakt", label: "Trakt" },
               { value: "mdblist", label: "MDBList" },
-              { value: "filter", label: "TMDB Filter" },
+              { value: "filter", label: "TMDB" },
             ]}
             value={tab}
             onChange={(t) => onChange({ ...source, tab: t })}
@@ -111,7 +115,11 @@ export default function ImageSource({
                       sort,
                       ...(sort === "trending_week" && { provider: "" }),
                       ...(timeSensitive && filter.decade && { decade: null }),
-                      ...(nowPlaying && { genre: "", provider: "", language: "" }),
+                      ...(nowPlaying && {
+                        genre: "",
+                        provider: "",
+                        language: "",
+                      }),
                     });
                   }}
                   options={sortOptions}
@@ -137,7 +145,10 @@ export default function ImageSource({
                   <SearchableSelect
                     value={filter.genre}
                     onChange={(v) => setFilter({ genre: v })}
-                    options={genres.map((g) => ({ value: g.id, label: g.name }))}
+                    options={genres.map((g) => ({
+                      value: g.id,
+                      label: g.name,
+                    }))}
                     emptyLabel="Any Genre"
                   />
                 </Field>
@@ -162,7 +173,10 @@ export default function ImageSource({
                   <SearchableSelect
                     value={filter.region || "US"}
                     onChange={(v) => setFilter({ region: v })}
-                    options={REGIONS.map((r) => ({ value: r.code, label: r.name }))}
+                    options={REGIONS.map((r) => ({
+                      value: r.code,
+                      label: r.name,
+                    }))}
                   />
                 </Field>
               )}
@@ -251,6 +265,12 @@ export default function ImageSource({
                 />
               )}
             </>
+          )}
+          {tab === "catalog" && (
+            <AIOCatalogBrowser
+              selectedIds={catalog?.selectedIds ?? []}
+              onChange={(selectedIds) => setCatalog({ selectedIds })}
+            />
           )}
         </Card>
       </Collapsible>

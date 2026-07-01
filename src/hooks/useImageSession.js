@@ -6,6 +6,10 @@ import {
   loadImages,
   shuffle,
 } from "../lib/tmdb";
+import {
+  fetchAIOCatalogImages,
+  loadStoredAIOCatalogs,
+} from "../lib/aioCatalog";
 import { CACHE_KEY, getSourceKey } from "../lib/defaults";
 
 const INITIAL_STATUS = {
@@ -126,13 +130,37 @@ export function useImageSession({
           traktKey,
           apiKey: tmdbKey,
         });
-      } else {
+      } else if (source.tab === "mdblist") {
         allPaths = await fetchMDBListImages({
           url: source.mdblist.mode === "url" ? source.mdblist.url : undefined,
           listId:
             source.mdblist.mode !== "url" ? source.mdblist.listId : undefined,
           mediaType: source.mdblist.mediaType || undefined,
           mdblistKey,
+          apiKey: tmdbKey,
+        });
+      } else {
+        const catalogs = loadStoredAIOCatalogs();
+        if (!catalogs?.length) {
+          setStatus({
+            state: "error",
+            message: "No catalog imported yet — use the Catalog tab to import your AIOMetadata JSON.",
+          });
+          setGenerating(false);
+          return;
+        }
+        const selectedIds = source.catalog?.selectedIds ?? [];
+        if (!selectedIds.length) {
+          setStatus({
+            state: "error",
+            message: "Select at least one catalog to generate a backdrop.",
+          });
+          setGenerating(false);
+          return;
+        }
+        allPaths = await fetchAIOCatalogImages({
+          catalogs,
+          selectedIds,
           apiKey: tmdbKey,
         });
       }

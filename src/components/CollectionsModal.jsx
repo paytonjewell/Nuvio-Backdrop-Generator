@@ -8,6 +8,22 @@ import { renderCanvas } from "../lib/canvas";
 import { uploadToImgbb } from "../lib/imgbb";
 import s from "./CollectionsModal.module.css";
 
+const SELECTION_KEY = "nuvio_last_selection";
+
+function loadSavedSelection() {
+  try { return JSON.parse(localStorage.getItem(SELECTION_KEY) || "null"); }
+  catch { return null; }
+}
+
+function saveSelection(profile) {
+  try {
+    localStorage.setItem(SELECTION_KEY, JSON.stringify({
+      profileId: profile.id,
+      profileIndex: profile.profile_index,
+    }));
+  } catch {}
+}
+
 function FolderCard({ folder, onClick }) {
   const [imgFailed, setImgFailed] = useState(false);
   const isPoster = folder.tileShape === "POSTER";
@@ -60,29 +76,59 @@ export default function CollectionsModal({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [closeBlocked, setCloseBlocked] = useState(false);
+  const closeBlockedTimer = useRef(null);
   const offscreen = useRef(null);
   const successTimer = useRef(null);
   const compareRef = useRef(null);
   const isDragging = useRef(false);
   const justDragged = useRef(false);
 
+  const handleClose = useCallback(() => {
+    if (saving) {
+      setCloseBlocked(true);
+      clearTimeout(closeBlockedTimer.current);
+      closeBlockedTimer.current = setTimeout(() => setCloseBlocked(false), 2500);
+      return;
+    }
+    onClose();
+  }, [saving, onClose]);
+
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") handleClose();
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [handleClose]);
 
   useEffect(() => {
-    return () => clearTimeout(successTimer.current);
+    return () => {
+      clearTimeout(successTimer.current);
+      clearTimeout(closeBlockedTimer.current);
+    };
   }, []);
+
+  // Warn before page unload while a save is in progress
+  useEffect(() => {
+    if (!saving) return;
+    const handler = (e) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [saving]);
 
   useEffect(() => {
     setLoading(true);
     setError("");
     fetchProfiles(accessToken)
-      .then(setProfiles)
+      .then((fetched) => {
+        setProfiles(fetched);
+        const saved = loadSavedSelection();
+        if (saved) {
+          const match = fetched.find((p) => p.id === saved.profileId);
+          if (match) selectProfile(match);
+        }
+      })
       .catch((err) => {
         if (err.code === "SESSION_EXPIRED") {
           onSessionExpired?.();
@@ -187,10 +233,10 @@ export default function CollectionsModal({
     setStep("collections");
     setLoading(true);
     setError("");
+    saveSelection(profile);
     try {
       const data = await fetchCollections(accessToken, profile.profile_index);
       const cols = data?.[0]?.collections_json ?? [];
-      console.log("[Nuvio Collections]", data);
       setCollections(cols);
     } catch (err) {
       if (err.code === "SESSION_EXPIRED") {
@@ -286,7 +332,7 @@ export default function CollectionsModal({
     <div
       className={s.overlay}
       onClick={() => {
-        if (!justDragged.current) onClose();
+        if (!justDragged.current) handleClose();
       }}
       role="presentation"
     >
@@ -319,10 +365,16 @@ export default function CollectionsModal({
               {title}
             </span>
           </div>
-          <button className={s.closeBtn} onClick={onClose} aria-label="Close">
+          <button className={s.closeBtn} onClick={handleClose} aria-label="Close">
             ✕
           </button>
         </div>
+
+        {closeBlocked && (
+          <div className={s.saveBlockedNotice}>
+            Please wait — save in progress.
+          </div>
+        )}
 
         {/* Step 1: Profiles */}
         {step === "profiles" && (

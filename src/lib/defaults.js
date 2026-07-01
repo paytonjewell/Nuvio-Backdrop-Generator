@@ -1,7 +1,7 @@
 export const CACHE_KEY = "nuvio_image_cache";
 
 export const DEFAULT_SOURCE = {
-  tab: "trakt",
+  tab: "catalog",
   imageType: "backdrop",
   filter: {
     type: "movie",
@@ -27,6 +27,9 @@ export const DEFAULT_SOURCE = {
     selectedListName: "",
     searchUsername: "",
     mediaType: "",
+  },
+  catalog: {
+    selectedIds: [],
   },
 };
 
@@ -74,6 +77,10 @@ export function getSourceKey(source) {
     if (mode === "trending-media" || mode === "popular-media")
       return `trakt|${mode}|${mediaType}`;
     return `trakt|user|${listId}`;
+  }
+  if (source.tab === "catalog") {
+    const ids = source.catalog?.selectedIds ?? [];
+    return `catalog|${[...ids].sort().join(",")}`;
   }
   const { mode, url, listId } = source.mdblist;
   return `mdblist|${mode}|${mode === "url" ? url : listId}`;
