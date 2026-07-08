@@ -1,6 +1,7 @@
 const BASE_URL = "https://dpyhjjcoabcglfmgecug.supabase.co/auth/v1";
 const APIKEY = "sb_publishable_zcNkgqGJjBtj8GoRlMvl9A_zkdmXhf5";
 const STORAGE_KEY = "nuvio_session";
+const SELECTION_KEY = "nuvio_last_selection";
 
 export function getSession() {
   try {
@@ -16,6 +17,7 @@ function saveSession(data) {
 
 export function clearSession() {
   localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(SELECTION_KEY);
 }
 
 export async function signIn(email, password) {

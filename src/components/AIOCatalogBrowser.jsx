@@ -135,8 +135,15 @@ export default function AIOCatalogBrowser({ selectedIds, onChange }) {
           <div className={s.helpOverlay} onClick={() => setHelpOpen(false)}>
             <div className={s.helpModal} onClick={(e) => e.stopPropagation()}>
               <div className={s.helpHeader}>
-                <span className={s.helpTitle}>How to export your catalog JSON</span>
-                <button className={s.helpClose} onClick={() => setHelpOpen(false)}>✕</button>
+                <span className={s.helpTitle}>
+                  How to export your catalog JSON
+                </span>
+                <button
+                  className={s.helpClose}
+                  onClick={() => setHelpOpen(false)}
+                >
+                  ✕
+                </button>
               </div>
               <img
                 src={aioScreenshot}
@@ -144,10 +151,21 @@ export default function AIOCatalogBrowser({ selectedIds, onChange }) {
                 className={s.helpScreenshot}
               />
               <ol className={s.helpSteps}>
-                <li>Open <strong>AIOMetadata</strong> and make sure your configuration is loaded.</li>
-                <li>Go to the <strong>Catalogs</strong> section.</li>
-                <li>Near the top, click <strong>Share Setup</strong>.</li>
-                <li>Click <strong>Copy to Clipboard</strong> and paste it into the box, or click <strong>Download .json</strong> and import it here.</li>
+                <li>
+                  Open <strong>AIOMetadata</strong> and make sure your
+                  configuration is loaded.
+                </li>
+                <li>
+                  Go to the <strong>Catalogs</strong> section.
+                </li>
+                <li>
+                  Near the top, click <strong>Share Setup</strong>.
+                </li>
+                <li>
+                  Click <strong>Copy to Clipboard</strong> and paste it into the
+                  box, or click <strong>Download .json</strong> and import it
+                  here.
+                </li>
               </ol>
             </div>
           </div>
@@ -240,7 +258,7 @@ export default function AIOCatalogBrowser({ selectedIds, onChange }) {
                 <span
                   className={`${s.badge} ${c.type === "movie" ? s.badgeMovie : s.badgeSeries}`}
                 >
-                  {c.type === "movie" ? "movie" : "series"}
+                  {c.type === "movie" ? "🎬" : "📺"}
                 </span>
                 {(c.tags ?? []).slice(0, 1).map((tag) => (
                   <span key={tag} className={s.badge}>

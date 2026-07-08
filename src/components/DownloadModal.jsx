@@ -1,10 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { renderCanvas } from '../lib/canvas'
 import { RESOLUTIONS } from '../lib/constants'
+import { loadStored, useLocalStorage } from '../hooks/useLocalStorage'
 import s from './DownloadModal.module.css'
 
+const RES_KEY = 'backdrop_download_resolution'
+
+function loadSavedRes() {
+  const saved = loadStored(RES_KEY, null)
+  return RESOLUTIONS.find(r => `${r.width}x${r.height}` === saved) ?? RESOLUTIONS[1]
+}
+
 export default function DownloadModal({ images, imageType, layout, overlay, text, excludedPaths, onClose }) {
-  const [selectedRes, setSelectedRes] = useState(RESOLUTIONS[2]) // 1080p default
+  const [selectedRes, setSelectedRes] = useState(loadSavedRes)
+  useLocalStorage(RES_KEY, `${selectedRes.width}x${selectedRes.height}`)
   const [previewUrl, setPreviewUrl]   = useState('')
   const [rendering, setRendering]     = useState(false)
   const offscreen = useRef(null)

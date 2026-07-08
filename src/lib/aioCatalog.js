@@ -3,7 +3,13 @@ import { fetchTMDB } from "./tmdb";
 const AIO_CATALOG_KEY = "nuvio_aio_catalog";
 
 // IDs that AIOMetadata ships without a metadata.discover block
-const BUILTIN_IDS = new Set(["tmdb.trending", "tmdb.top", "tmdb.top_rated"]);
+const BUILTIN_IDS = new Set([
+  "tmdb.trending",
+  "tmdb.trending.movie",
+  "tmdb.trending.series",
+  "tmdb.top",
+  "tmdb.top_rated",
+]);
 
 function resolveAIODate(token) {
   const match = token.match(/^__tmdb_date__:([^:]+):([^:]+)$/);
@@ -48,9 +54,15 @@ function builtinEndpoint(catalogId, tmdbType) {
   if (catalogId === "tmdb.trending")
     return { endpoint: `/trending/${tmdbType}/week`, params: {} };
   if (catalogId === "tmdb.top")
-    return { endpoint: `/${tmdbType}/popular`, params: { include_adult: "false" } };
+    return {
+      endpoint: `/${tmdbType}/popular`,
+      params: { include_adult: "false" },
+    };
   if (catalogId === "tmdb.top_rated")
-    return { endpoint: `/${tmdbType}/top_rated`, params: { include_adult: "false" } };
+    return {
+      endpoint: `/${tmdbType}/top_rated`,
+      params: { include_adult: "false" },
+    };
   return null;
 }
 
@@ -85,7 +97,12 @@ async function fetchOneCatalog(catalog, apiKey, maxBackdrops) {
   return { backdrop: [...backdrops], poster: [...posters] };
 }
 
-export async function fetchAIOCatalogImages({ catalogs, selectedIds, apiKey, maxTotal = 200 }) {
+export async function fetchAIOCatalogImages({
+  catalogs,
+  selectedIds,
+  apiKey,
+  maxTotal = 200,
+}) {
   const selected = catalogs.filter(
     (c) => selectedIds.includes(catalogUniqueKey(c)) && c.source === "tmdb",
   );
@@ -117,7 +134,7 @@ export function catalogUniqueKey(catalog) {
 
 export function isTMDBCatalog(catalog) {
   if (catalog.source !== "tmdb") return false;
-  return !!(catalog.metadata?.discover?.params) || BUILTIN_IDS.has(catalog.id);
+  return !!catalog.metadata?.discover?.params || BUILTIN_IDS.has(catalog.id);
 }
 
 export function loadStoredAIOCatalogs() {

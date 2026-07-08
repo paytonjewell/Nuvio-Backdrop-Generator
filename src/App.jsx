@@ -15,7 +15,7 @@ import {
 import DownloadModal from "./components/DownloadModal";
 import NuvioAuthModal from "./components/NuvioAuthModal";
 import CollectionsModal from "./components/CollectionsModal";
-import { getSession, signOut } from "./lib/nuvioAuth";
+import { getSession, signOut, clearSession } from "./lib/nuvioAuth";
 import {
   DEFAULT_SOURCE,
   DEFAULT_LAYOUT,
@@ -263,7 +263,7 @@ export default function App() {
         <CollectionsModal
           accessToken={nuvioSession.access_token}
           onClose={() => setCollectionsOpen(false)}
-          onSessionExpired={() => { setNuvioSession(null); setCollectionsOpen(false); }}
+          onSessionExpired={() => { clearSession(); setNuvioSession(null); setCollectionsOpen(false); }}
           images={images}
           imageType={source.imageType}
           layout={layout}

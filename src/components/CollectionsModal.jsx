@@ -6,14 +6,10 @@ import {
 } from "../lib/nuvioApi";
 import { renderCanvas } from "../lib/canvas";
 import { uploadToImgbb } from "../lib/imgbb";
+import { loadStored } from "../hooks/useLocalStorage";
 import s from "./CollectionsModal.module.css";
 
 const SELECTION_KEY = "nuvio_last_selection";
-
-function loadSavedSelection() {
-  try { return JSON.parse(localStorage.getItem(SELECTION_KEY) || "null"); }
-  catch { return null; }
-}
 
 function saveSelection(profile) {
   try {
@@ -123,7 +119,7 @@ export default function CollectionsModal({
     fetchProfiles(accessToken)
       .then((fetched) => {
         setProfiles(fetched);
-        const saved = loadSavedSelection();
+        const saved = loadStored(SELECTION_KEY, null);
         if (saved) {
           const match = fetched.find((p) => p.id === saved.profileId);
           if (match) selectProfile(match);
